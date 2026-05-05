@@ -188,14 +188,8 @@
       <h3>那件你拖了很久的事，是什麼？</h3>
       <p class="form-sub">寫下來，我們陪你把它做完。</p>
 
-      <!-- 部署時把 action 換成 Formspree / Web3Forms 端點。-->
-      <!-- 例：action="https://formspree.io/f/abcdwxyz" -->
-      <form id="signupForm" method="POST" action="https://formspree.io/f/YOUR_FORMSPREE_ID">
-
-        <input type="hidden" name="_subject" value="新報名 — 今天一定要把事情解決工作坊">
-        <input type="hidden" name="_redirect" value="success.html">
-        <!-- Honeypot for bots -->
-        <input type="text" name="_gotcha" style="display:none">
+      <form id="signupForm" method="POST" action="/api/signup">
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
 
         <div class="form-row">
           <label>怎麼稱呼你？<span class="req">*</span></label>

@@ -1,17 +1,22 @@
 {
   "name": "getitdone-workshop-website",
   "version": "1.0.0",
-  "description": "今天一定要把事情解決工作坊 — 官方網站",
+  "description": "今天一定要把事情解決工作坊 — 官方網站 + 報名後端",
   "private": true,
-  "scripts": {
-    "start": "npx serve -l 3000 .",
-    "dev": "npx serve -l 3000 ."
+  "type": "module",
+  "engines": {
+    "node": ">=20"
   },
-  "keywords": [
-    "workshop",
-    "productivity",
-    "anti-procrastination",
-    "taiwan"
-  ],
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "compression": "^1.7.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "pg": "^8.13.1"
+  },
   "license": "MIT"
 }

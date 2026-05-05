@@ -21,26 +21,19 @@
     revealEls.forEach((el) => el.classList.add('in'));
   }
 
-  // 2) Form submit handling
+  // 2) Form submit handling — disable button, persist task for success page echo
   const form = document.getElementById('signupForm');
   if (form) {
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', function () {
       const btn = form.querySelector('.submit-btn');
-      if (!btn) return;
-      btn.disabled = true;
-      btn.textContent = '送出中⋯⋯';
-      // If the action is unset (placeholder), fall back to client-only success page.
-      const action = form.getAttribute('action') || '';
-      if (!action || action.includes('YOUR_FORMSPREE_ID')) {
-        e.preventDefault();
-        // Persist task title to next page so success can echo it
-        try {
-          const task = (form.querySelector('[name="task"]') || {}).value || '';
-          sessionStorage.setItem('getitdone_task', task);
-        } catch (_) {}
-        setTimeout(() => { window.location.href = 'success.html'; }, 600);
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '送出中⋯⋯';
       }
-      // Otherwise let the form post to Formspree / Web3Forms; their default redirect goes to success page if configured.
+      try {
+        const task = (form.querySelector('[name="task"]') || {}).value || '';
+        sessionStorage.setItem('getitdone_task', task);
+      } catch (_) {}
     });
   }
 

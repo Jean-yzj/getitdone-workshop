@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>後台 ｜ 報名管理</title>
+<style>
+  :root {
+    --navy: #1F3A5F;
+    --cream: #FAF6EE;
+    --bear: #C28D5C;
+    --line: #E5E0D6;
+    --danger: #c0392b;
+    --ok: #2e7d32;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "PingFang TC", "Segoe UI", sans-serif;
+    background: var(--cream);
+    color: var(--navy);
+    padding: 24px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  header h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
+  header .sub { color: #66738a; font-size: 13px; margin-top: 2px; }
+
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0 18px; }
+  .pill { background: var(--navy); color: white; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .pill.muted { background: #cdd6e2; color: #2c3a52; }
+
+  button, .btn {
+    background: var(--navy);
+    color: white;
+    border: 0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.2;
+  }
+  button:hover, .btn:hover { opacity: 0.9; }
+  button.ghost { background: transparent; color: var(--navy); border: 1px solid var(--line); }
+  button.danger { background: var(--danger); }
+
+  input[type=search] {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-size: 14px;
+    min-width: 240px;
+    background: white;
+  }
+  input[type=search]:focus { outline: 2px solid var(--navy); outline-offset: -1px; }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(31, 58, 95, 0.06);
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    font-size: 14px;
+  }
+  th {
+    background: var(--navy);
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  tr:last-child td { border-bottom: 0; }
+  tr:hover td { background: #fafaf6; }
+  td.task { max-width: 360px; min-width: 240px; white-space: pre-wrap; word-break: break-word; }
+  td.tight { white-space: nowrap; }
+  td .tag { display: inline-block; background: #eef2f7; color: var(--navy); padding: 2px 8px; border-radius: 6px; font-size: 12px; margin: 1px 2px 1px 0; }
+  td .ts { color: #66738a; font-size: 12px; }
+  .empty { text-align: center; padding: 80px 20px; color: #999; background: white; border-radius: 12px; }
+  .err { color: var(--danger); padding: 12px; background: #fff3f3; border-radius: 8px; margin-bottom: 12px; }
+
+  .row-actions button { padding: 4px 10px; font-size: 12px; }
+
+  details.row-detail { margin-top: 8px; }
+  details.row-detail summary { cursor: pointer; color: var(--navy); font-size: 12px; opacity: 0.7; }
+  details.row-detail summary:hover { opacity: 1; }
+  details.row-detail .extra { margin-top: 6px; padding: 8px; background: #f7f4eb; border-radius: 6px; font-size: 12px; line-height: 1.5; }
+
+  @media (max-width: 700px) {
+    body { padding: 12px; }
+    th, td { padding: 8px 10px; font-size: 13px; }
+    td.task { max-width: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📋 報名後台</h1>
+    <div class="sub">今天一定要把事情解決工作坊</div>
+  </div>
+  <div class="bar" style="margin: 0;">
+    <span class="pill" id="count">…</span>
+    <input type="search" id="q" placeholder="搜尋姓名 / Email / 任務⋯⋯" autocomplete="off">
+    <a class="btn" href="/admin/api/export.csv" download>⬇ 下載 CSV (Excel)</a>
+    <button class="ghost" onclick="load()" type="button">↻ 重新整理</button>
+    <button class="ghost" onclick="location='/'" type="button">← 回首頁</button>
+  </div>
+</header>
+
+<div id="err"></div>
+<div id="content"><div class="empty">載入中⋯⋯</div></div>
+
+<script>
+const DURATION_LABEL = {
+  '1week': '1 週內', '1month': '1 個月', '3month': '3 個月',
+  'halfyear': '半年+', 'year': '一年+', 'forever': '太久了'
+};
+const ENV_LABEL = {
+  'silent': '🤫 完全安靜', 'background': '🔉 背景音可', 'speak': '📢 可發聲', 'flexible': '🌀 看現場'
+};
+const SOURCE_LABEL = {
+  'ig': 'Instagram', 'fb': 'Facebook', 'threads': 'Threads',
+  'line': 'LINE', 'friend': '朋友', 'other': '其他'
+};
+const WHY_LABEL = {
+  'busy': '太忙', 'dontknow': '不知從哪開始', 'afraid': '害怕失敗',
+  'annoying': '太麻煩', 'perfectionism': '完美主義', 'emotional': '不想面對情緒',
+  'alone': '一個人做不下去', 'other': '其他'
+};
+const HELP_LABEL = {
+  'alone': '不要被打擾', 'chat': '陪聊 5 分鐘', 'review': '幫我看成果',
+  'company': '陪我打通電話', 'depends': '看狀況'
+};
+
+let all = [];
+
+function esc(s) {
+  return (s == null ? '' : String(s)).replace(/[<>&"']/g, (c) => ({
+    '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function fmtTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function tags(arr, dict) {
+  return (arr || []).map((v) => `<span class="tag">${esc(dict[v] || v)}</span>`).join('');
+}
+
+async function load() {
+  document.getElementById('err').innerHTML = '';
+  try {
+    const r = await fetch('/admin/api/signups', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    all = await r.json();
+    render();
+  } catch (e) {
+    document.getElementById('err').innerHTML = `<div class="err">載入失敗：${esc(e.message)}</div>`;
+    document.getElementById('content').innerHTML = '<div class="empty">載入失敗</div>';
+  }
+}
+
+function matchesQuery(r, q) {
+  if (!q) return true;
+  const hay = [
+    r.name, r.email, r.phone, r.task, r.notes,
+    DURATION_LABEL[r.duration] || r.duration,
+    ENV_LABEL[r.env] || r.env,
+    SOURCE_LABEL[r.source] || r.source,
+    (r.why || []).map((v) => WHY_LABEL[v] || v).join(' '),
+    (r.help || []).map((v) => HELP_LABEL[v] || v).join(' '),
+  ].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+function render() {
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const rows = all.filter((r) => matchesQuery(r, q));
+  const countEl = document.getElementById('count');
+  countEl.textContent = q ? `${rows.length} 筆 / 共 ${all.length}` : `${all.length} 筆報名`;
+  countEl.className = 'pill' + (rows.length === 0 ? ' muted' : '');
+
+  if (!rows.length) {
+    document.getElementById('content').innerHTML = q
+      ? '<div class="empty">沒有符合的結果</div>'
+      : '<div class="empty">還沒有人報名 — 等第一份勇氣到來 🐻</div>';
+    return;
+  }
+
+  const html = `<table>
+    <thead><tr>
+      <th>#</th>
+      <th>時間</th>
+      <th>姓名</th>
+      <th>Email</th>
+      <th>電話</th>
+      <th>那件想完成的事</th>
+      <th>拖了</th>
+      <th>環境</th>
+      <th>來源</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows.map((r) => `
+      <tr>
+        <td class="tight">${r.id}</td>
+        <td class="tight"><span class="ts">${esc(fmtTime(r.created_at))}</span></td>
+        <td class="tight">${esc(r.name)}</td>
+        <td class="tight"><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></td>
+        <td class="tight">${esc(r.phone || '')}</td>
+        <td class="task">
+          ${esc(r.task)}
+          <details class="row-detail">
+            <summary>更多</summary>
+            <div class="extra">
+              <div><strong>為什麼一直沒做：</strong>${tags(r.why, WHY_LABEL) || '<span class="ts">未填</span>'}</div>
+              <div><strong>需要的協助：</strong>${tags(r.help, HELP_LABEL) || '<span class="ts">未填</span>'}</div>
+              ${r.notes ? `<div style="margin-top:6px;"><strong>補充：</strong>${esc(r.notes)}</div>` : ''}
+              <div style="margin-top:6px; color:#888;">承諾條款 ${r.pledges}/4 · IP ${esc(r.ip || '')}</div>
+            </div>
+          </details>
+        </td>
+        <td class="tight">${esc(DURATION_LABEL[r.duration] || r.duration || '')}</td>
+        <td class="tight">${esc(ENV_LABEL[r.env] || r.env || '')}</td>
+        <td class="tight">${esc(SOURCE_LABEL[r.source] || r.source || '')}</td>
+        <td class="row-actions tight"><button class="danger" onclick="del(${r.id})" type="button">刪</button></td>
+      </tr>`).join('')}</tbody></table>`;
+  document.getElementById('content').innerHTML = html;
+}
+
+async function del(id) {
+  if (!confirm(`確定刪除 #${id}？此動作不可還原。`)) return;
+  try {
+    const r = await fetch('/admin/api/signups/' + id, { method: 'DELETE', credentials: 'same-origin' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    await load();
+  } catch (e) {
+    alert('刪除失敗：' + e.message);
+  }
+}
+
+document.getElementById('q').addEventListener('input', render);
+load();
+</script>
+</body>
+</html>
