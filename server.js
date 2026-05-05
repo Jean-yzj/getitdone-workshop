@@ -292,22 +292,29 @@ app.get('/admin/api/content', basicAuth, (req, res) => {
 
 app.put('/admin/api/content', basicAuth, async (req, res, next) => {
   try {
-    const updates = req.body && typeof req.body === 'object' ? req.body : null;
-    if (!updates) return res.status(400).json({ ok: false, error: 'invalid_body' });
+    const body = req.body;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return res.status(400).json({ ok: false, error: 'invalid_body' });
+    }
     const validKeys = new Set(CONTENT_SCHEMA.map((f) => f.key));
-    const entries = Object.entries(updates).filter(([k]) => validKeys.has(k));
+    const entries = Object.entries(body).filter(([k]) => validKeys.has(k));
     if (!entries.length) return res.json({ ok: true, updated: 0 });
 
-    // batch upsert in a transaction
+    // pre-validate values before opening a transaction
+    for (const [k, v] of entries) {
+      const value = String(v ?? '');
+      if (value.length > 8000) {
+        return res.status(400).json({ ok: false, error: 'value_too_long', key: k });
+      }
+    }
+
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       for (const [k, v] of entries) {
-        const value = String(v ?? '');
-        if (value.length > 8000) throw new Error(`value too long: ${k}`);
         await client.query(
           'INSERT INTO site_content (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()',
-          [k, value]
+          [k, String(v ?? '')]
         );
       }
       await client.query('COMMIT');
@@ -348,8 +355,11 @@ app.use((req, res) => res.status(404).send('Not Found'));
 app.use((err, req, res, _next) => {
   console.error('error:', err);
   if (res.headersSent) return;
-  if (NODE_ENV === 'production') res.status(500).json({ ok: false, error: 'internal' });
-  else res.status(500).json({ ok: false, error: err.message });
+  const status = err.status || err.statusCode || 500;
+  // body-parser surfaces `type` like 'entity.parse.failed' for malformed JSON
+  const code = status === 400 ? (err.type || 'bad_request') : status === 500 ? 'internal' : 'error';
+  if (NODE_ENV === 'production') res.status(status).json({ ok: false, error: code });
+  else res.status(status).json({ ok: false, error: err.message, type: err.type });
 });
 
 // ─── Boot ─────────────────────────────────────────────────────────
