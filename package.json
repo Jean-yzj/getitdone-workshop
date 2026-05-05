@@ -1,0 +1,17 @@
+{
+  "name": "getitdone-workshop-website",
+  "version": "1.0.0",
+  "description": "今天一定要把事情解決工作坊 — 官方網站",
+  "private": true,
+  "scripts": {
+    "start": "npx serve -l 3000 .",
+    "dev": "npx serve -l 3000 ."
+  },
+  "keywords": [
+    "workshop",
+    "productivity",
+    "anti-procrastination",
+    "taiwan"
+  ],
+  "license": "MIT"
+}

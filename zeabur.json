@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schema.zeabur.app/template.json",
+  "name": "getitdone-workshop",
+  "description": "今天一定要把事情解決工作坊 — 靜態網站",
+  "build": {
+    "type": "static",
+    "outputDir": "."
+  }
+}
