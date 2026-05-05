@@ -122,6 +122,34 @@
   .field.changed { background: #fff8ec; margin: 0 -10px; padding: 14px 10px; border-radius: 6px; border-bottom: 1px dashed var(--line); }
   .field.changed::before { content: '● '; color: var(--warn); }
 
+  /* Bool toggle (visibility switch) */
+  .field.kind-bool { padding: 10px 0; background: #f4f8fa; border-radius: 8px; padding-left: 14px; padding-right: 14px; margin-bottom: 6px; border-bottom: 0; }
+  .field.kind-bool.changed { background: #fff8ec; }
+  .bool-row { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+  .bool-row input[type=checkbox] { position: absolute; opacity: 0; pointer-events: none; }
+  .bool-row .switch {
+    width: 38px; height: 22px; border-radius: 22px;
+    background: #c5cdd6; position: relative;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .bool-row .switch::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.15s;
+  }
+  .bool-row input:checked + .switch { background: var(--ok); }
+  .bool-row input:checked + .switch::after { transform: translateX(16px); }
+  .bool-row .label-text { font-weight: 600; flex: 1; font-size: 14px; }
+  .bool-row .state {
+    font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    background: #d8dfe6; color: #66738a; font-weight: 600;
+  }
+  .bool-row input:checked ~ .state { background: var(--ok); color: white; }
+  .bool-row .state::before { content: '隱藏中'; }
+  .bool-row input:checked ~ .state::before { content: '顯示中'; }
+
   .empty { text-align: center; padding: 60px; color: #999; background: white; border-radius: 12px; }
 
   /* sticky save floater */
@@ -191,10 +219,21 @@ function setStatus(text, cls) {
 
 function getInputEl(key) { return document.querySelector('[data-key="' + key + '"]'); }
 
+function getValue(el) {
+  if (!el) return null;
+  if (el.type === 'checkbox') return el.checked ? '1' : '';
+  return el.value;
+}
+function setValue(el, v) {
+  if (!el) return;
+  if (el.type === 'checkbox') el.checked = (v === '1');
+  else el.value = (v == null ? '' : v);
+}
+
 function isDirty(key) {
   const el = getInputEl(key);
   if (!el) return false;
-  return el.value !== originals[key];
+  return getValue(el) !== originals[key];
 }
 
 function updateDirtyState() {
@@ -265,8 +304,20 @@ function render() {
       <div class="section-body">
         ${s.fields.map((f) => {
           const val = (f.value == null ? '' : String(f.value));
+          // Bool field — render as toggle switch
+          if (f.kind === 'bool') {
+            const checked = val === '1' ? 'checked' : '';
+            return `<div class="field kind-bool" data-wrap-key="${esc(f.key)}">
+              <label class="bool-row">
+                <input type="checkbox" data-key="${esc(f.key)}" ${checked}>
+                <span class="switch"></span>
+                <span class="label-text">${esc(f.label)}</span>
+                <span class="state"></span>
+              </label>
+            </div>`;
+          }
+          // Text/textarea/richtext field
           const isLong = f.kind === 'textarea' || f.kind === 'richtext' || val.length > 80 || val.includes('\n');
-          const tag = isLong ? 'textarea' : 'input';
           const isRich = f.kind === 'richtext';
           const inputHtml = isLong
             ? `<textarea data-key="${esc(f.key)}" rows="${Math.min(8, Math.max(2, val.split('\n').length + 1))}">${esc(val)}</textarea>`
@@ -286,9 +337,10 @@ function render() {
       </div>
     </details>`).join('');
   document.getElementById('content').innerHTML = html;
-  // wire input events
+  // wire input + change events (checkbox uses change)
   document.querySelectorAll('[data-key]').forEach((el) => {
     el.addEventListener('input', updateDirtyState);
+    el.addEventListener('change', updateDirtyState);
   });
 }
 
@@ -297,7 +349,8 @@ async function saveAll() {
   for (const f of fields) {
     const el = getInputEl(f.key);
     if (!el) continue;
-    if (el.value !== originals[f.key]) updates[f.key] = el.value;
+    const v = getValue(el);
+    if (v !== originals[f.key]) updates[f.key] = v;
   }
   const n = Object.keys(updates).length;
   if (!n) return;
@@ -341,7 +394,7 @@ async function resetOne(key) {
     const f = fields.find((x) => x.key === key);
     if (f) f.value = data.value;
     const el = getInputEl(key);
-    if (el) el.value = data.value;
+    if (el) setValue(el, data.value);
     updateDirtyState();
     setStatus('已重設 ' + key + ' ✓', 'saved');
   } catch (e) {

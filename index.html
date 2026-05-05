@@ -68,22 +68,22 @@
       <p class="section-sub">{{why_sub}}</p>
     </div>
     <div class="why-grid">
-      <div class="why-card reveal">
+      {{#if why_card_1_visible}}<div class="why-card reveal">
         <div class="quote-mark">“</div>
         <p>{{{why_card_1}}}</p>
-      </div>
-      <div class="why-card reveal">
+      </div>{{/if}}
+      {{#if why_card_2_visible}}<div class="why-card reveal">
         <div class="quote-mark">“</div>
         <p>{{{why_card_2}}}</p>
-      </div>
-      <div class="why-card reveal">
+      </div>{{/if}}
+      {{#if why_card_3_visible}}<div class="why-card reveal">
         <div class="quote-mark">“</div>
         <p>{{{why_card_3}}}</p>
-      </div>
-      <div class="why-card reveal">
+      </div>{{/if}}
+      {{#if why_card_4_visible}}<div class="why-card reveal">
         <div class="quote-mark">“</div>
         <p>{{{why_card_4}}}</p>
-      </div>
+      </div>{{/if}}
     </div>
 
     <div class="why-quote reveal">
@@ -103,46 +103,46 @@
       <p class="section-sub">{{schedule_sub}}</p>
     </div>
     <div class="schedule-list reveal">
-      <div class="schedule-row">
+      {{#if sched_1_visible}}<div class="schedule-row">
         <div class="time">{{sched_1_time}}</div>
         <div class="item">{{sched_1_item}}<span class="desc">{{sched_1_desc}}</span></div>
         <div class="dur">{{sched_1_dur}}</div>
-      </div>
-      <div class="schedule-row">
+      </div>{{/if}}
+      {{#if sched_2_visible}}<div class="schedule-row">
         <div class="time">{{sched_2_time}}</div>
         <div class="item">{{sched_2_item}}<span class="desc">{{sched_2_desc}}</span></div>
         <div class="dur">{{sched_2_dur}}</div>
-      </div>
-      <div class="schedule-row">
+      </div>{{/if}}
+      {{#if sched_3_visible}}<div class="schedule-row">
         <div class="time">{{sched_3_time}}</div>
         <div class="item">{{sched_3_item}}<span class="desc">{{sched_3_desc}}</span></div>
         <div class="dur">{{sched_3_dur}}</div>
-      </div>
-      <div class="schedule-row">
+      </div>{{/if}}
+      {{#if sched_4_visible}}<div class="schedule-row">
         <div class="time">{{sched_4_time}}</div>
         <div class="item">{{sched_4_item}}<span class="desc">{{sched_4_desc}}</span></div>
         <div class="dur">{{sched_4_dur}}</div>
-      </div>
-      <div class="schedule-row">
+      </div>{{/if}}
+      {{#if sched_5_visible}}<div class="schedule-row">
         <div class="time">{{sched_5_time}}</div>
         <div class="item">{{sched_5_item}}<span class="desc">{{sched_5_desc}}</span></div>
         <div class="dur">{{sched_5_dur}}</div>
-      </div>
-      <div class="schedule-row">
+      </div>{{/if}}
+      {{#if sched_6_visible}}<div class="schedule-row">
         <div class="time">{{sched_6_time}}</div>
         <div class="item">{{sched_6_item}}<span class="desc">{{sched_6_desc}}</span></div>
         <div class="dur">{{sched_6_dur}}</div>
-      </div>
-      <div class="schedule-row">
+      </div>{{/if}}
+      {{#if sched_7_visible}}<div class="schedule-row">
         <div class="time">{{sched_7_time}}</div>
         <div class="item">{{sched_7_item}}<span class="desc">{{sched_7_desc}}</span></div>
         <div class="dur">{{sched_7_dur}}</div>
-      </div>
-      <div class="schedule-row">
+      </div>{{/if}}
+      {{#if sched_8_visible}}<div class="schedule-row">
         <div class="time">{{sched_8_time}}</div>
         <div class="item">{{sched_8_item}}<span class="desc">{{sched_8_desc}}</span></div>
         <div class="dur">{{sched_8_dur}}</div>
-      </div>
+      </div>{{/if}}
     </div>
   </div>
 </section>
@@ -156,13 +156,13 @@
       <p class="section-sub">{{rules_sub}}</p>
     </div>
     <div class="rule-grid">
-      <div class="rule-card reveal"><div class="rnum">01</div><div><h4>{{rule_1_title}}</h4><p>{{rule_1_body}}</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">02</div><div><h4>{{rule_2_title}}</h4><p>{{rule_2_body}}</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">03</div><div><h4>{{rule_3_title}}</h4><p>{{rule_3_body}}</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">04</div><div><h4>{{rule_4_title}}</h4><p>{{rule_4_body}}</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">05</div><div><h4>{{rule_5_title}}</h4><p>{{rule_5_body}}</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">06</div><div><h4>{{rule_6_title}}</h4><p>{{rule_6_body}}</p></div></div>
-      <div class="rule-card reveal" style="grid-column: 1 / -1; max-width: 50%; margin: 0 auto;"><div class="rnum">07</div><div><h4>{{rule_7_title}}</h4><p>{{rule_7_body}}</p></div></div>
+      {{#if rule_1_visible}}<div class="rule-card reveal"><div class="rnum">01</div><div><h4>{{rule_1_title}}</h4><p>{{rule_1_body}}</p></div></div>{{/if}}
+      {{#if rule_2_visible}}<div class="rule-card reveal"><div class="rnum">02</div><div><h4>{{rule_2_title}}</h4><p>{{rule_2_body}}</p></div></div>{{/if}}
+      {{#if rule_3_visible}}<div class="rule-card reveal"><div class="rnum">03</div><div><h4>{{rule_3_title}}</h4><p>{{rule_3_body}}</p></div></div>{{/if}}
+      {{#if rule_4_visible}}<div class="rule-card reveal"><div class="rnum">04</div><div><h4>{{rule_4_title}}</h4><p>{{rule_4_body}}</p></div></div>{{/if}}
+      {{#if rule_5_visible}}<div class="rule-card reveal"><div class="rnum">05</div><div><h4>{{rule_5_title}}</h4><p>{{rule_5_body}}</p></div></div>{{/if}}
+      {{#if rule_6_visible}}<div class="rule-card reveal"><div class="rnum">06</div><div><h4>{{rule_6_title}}</h4><p>{{rule_6_body}}</p></div></div>{{/if}}
+      {{#if rule_7_visible}}<div class="rule-card reveal" style="grid-column: 1 / -1; max-width: 50%; margin: 0 auto;"><div class="rnum">07</div><div><h4>{{rule_7_title}}</h4><p>{{rule_7_body}}</p></div></div>{{/if}}
     </div>
   </div>
 </section>
@@ -302,30 +302,30 @@
       <h2 class="section-title">{{faq_title}}</h2>
     </div>
     <div class="faq-list reveal">
-      <details class="faq-item">
+      {{#if faq_1_visible}}<details class="faq-item">
         <summary>{{faq_1_q}}</summary>
         <div class="ans">{{faq_1_a}}</div>
-      </details>
-      <details class="faq-item">
+      </details>{{/if}}
+      {{#if faq_2_visible}}<details class="faq-item">
         <summary>{{faq_2_q}}</summary>
         <div class="ans">{{faq_2_a}}</div>
-      </details>
-      <details class="faq-item">
+      </details>{{/if}}
+      {{#if faq_3_visible}}<details class="faq-item">
         <summary>{{faq_3_q}}</summary>
         <div class="ans">{{faq_3_a}}</div>
-      </details>
-      <details class="faq-item">
+      </details>{{/if}}
+      {{#if faq_4_visible}}<details class="faq-item">
         <summary>{{faq_4_q}}</summary>
         <div class="ans">{{faq_4_a}}</div>
-      </details>
-      <details class="faq-item">
+      </details>{{/if}}
+      {{#if faq_5_visible}}<details class="faq-item">
         <summary>{{faq_5_q}}</summary>
         <div class="ans">{{faq_5_a}}</div>
-      </details>
-      <details class="faq-item">
+      </details>{{/if}}
+      {{#if faq_6_visible}}<details class="faq-item">
         <summary>{{faq_6_q}}</summary>
         <div class="ans">{{faq_6_a}}</div>
-      </details>
+      </details>{{/if}}
     </div>
   </div>
 </section>

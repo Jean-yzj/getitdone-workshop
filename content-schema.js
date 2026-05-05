@@ -1,6 +1,9 @@
 // 全部可編輯文案的 schema（單一資料來源）
 // 每筆: key, label, kind, default, optional hint
-// kind: text | textarea | richtext  (richtext 允許 HTML，模板會用 {{{key}}} 不轉義)
+// kind: text | textarea | richtext | bool
+//   text/textarea  : 純文字（HTML 自動轉義）
+//   richtext       : 允許 HTML（模板會用 {{{key}}} 不轉義）
+//   bool           : 顯示開關，default='1' 顯示，''=隱藏（模板用 {{#if key}}...{{/if}} 包裹）
 
 export const CONTENT_SCHEMA = [
   // ───── Hero ─────
@@ -31,12 +34,16 @@ export const CONTENT_SCHEMA = [
   { section: '為什麼辦這場', key: 'why_eyebrow', label: '小標', kind: 'text', default: '為什麼辦這場' },
   { section: '為什麼辦這場', key: 'why_title', label: '主標', kind: 'text', default: '人類拖延的真相' },
   { section: '為什麼辦這場', key: 'why_sub', label: '副標', kind: 'text', default: '不是因為事情太難，是因為一直沒人陪我們開始。' },
+  { section: '為什麼辦這場', key: 'why_card_1_visible', label: '顯示引言 1', kind: 'bool', default: '1' },
   { section: '為什麼辦這場', key: 'why_card_1', label: '引言 1', kind: 'richtext',
     hint: '可用 <strong>...</strong> 加粗', default: '一封想傳很久的訊息，<strong>打開又關掉了 20 次</strong>。' },
+  { section: '為什麼辦這場', key: 'why_card_2_visible', label: '顯示引言 2', kind: 'bool', default: '1' },
   { section: '為什麼辦這場', key: 'why_card_2', label: '引言 2', kind: 'richtext',
     default: '一份寫到一半的履歷，<strong>停在某個段落整整三個月</strong>。' },
+  { section: '為什麼辦這場', key: 'why_card_3_visible', label: '顯示引言 3', kind: 'bool', default: '1' },
   { section: '為什麼辦這場', key: 'why_card_3', label: '引言 3', kind: 'richtext',
     default: '一本買了的書，<strong>書封都還沒拆</strong>。' },
+  { section: '為什麼辦這場', key: 'why_card_4_visible', label: '顯示引言 4', kind: 'bool', default: '1' },
   { section: '為什麼辦這場', key: 'why_card_4', label: '引言 4', kind: 'richtext',
     default: '一句想說的話，<strong>憋在心裡半年沒說出口</strong>。' },
   { section: '為什麼辦這場', key: 'belief_eyebrow', label: '信念區小標', kind: 'text', default: 'CORE BELIEF' },
@@ -62,6 +69,7 @@ export const CONTENT_SCHEMA = [
       { time: '17:50', item: '下一步約定 / 散場', desc: '寫下未完成的下一步，自願交換聯絡', dur: '10 min' },
     ][i - 1];
     return [
+      { section: '活動流程', key: `sched_${i}_visible`, label: `顯示第 ${i} 段`, kind: 'bool', default: '1' },
       { section: '活動流程', key: `sched_${i}_time`, label: `第 ${i} 段 · 時間`, kind: 'text', default: defaults.time },
       { section: '活動流程', key: `sched_${i}_item`, label: `第 ${i} 段 · 項目`, kind: 'text', default: defaults.item },
       { section: '活動流程', key: `sched_${i}_desc`, label: `第 ${i} 段 · 說明`, kind: 'text', default: defaults.desc },
@@ -84,6 +92,7 @@ export const CONTENT_SCHEMA = [
       { t: '遲到不補時間', b: '尊重所有準時到場的人。' },
     ][i - 1];
     return [
+      { section: '七條規則', key: `rule_${i}_visible`, label: `顯示規則 ${i}`, kind: 'bool', default: '1' },
       { section: '七條規則', key: `rule_${i}_title`, label: `規則 ${i} · 標題`, kind: 'text', default: defaults.t },
       { section: '七條規則', key: `rule_${i}_body`, label: `規則 ${i} · 說明`, kind: 'text', default: defaults.b },
     ];
@@ -140,6 +149,7 @@ export const CONTENT_SCHEMA = [
       { q: '會錄影或拍照公開嗎？', a: '只有合照會徵詢全員同意後拍攝，不會錄製過程。任務內容你不主動分享，我們也不會問。' },
     ][i - 1];
     return [
+      { section: '常見問題', key: `faq_${i}_visible`, label: `顯示 FAQ ${i}`, kind: 'bool', default: '1' },
       { section: '常見問題', key: `faq_${i}_q`, label: `Q ${i}`, kind: 'text', default: defaults.q },
       { section: '常見問題', key: `faq_${i}_a`, label: `A ${i}`, kind: 'textarea', default: defaults.a },
     ];

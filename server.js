@@ -101,11 +101,26 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+function isTruthy(v) {
+  return v != null && v !== '' && v !== '0' && v !== 'false';
+}
+
 function render(template, data) {
-  // {{{key}}} → raw HTML, {{key}} → escaped
-  return template
-    .replace(/\{\{\{(\w+)\}\}\}/g, (_, k) => (data[k] != null ? data[k] : ''))
-    .replace(/\{\{(\w+)\}\}/g, (_, k) => escapeHtml(data[k]));
+  // {{#if key}}...{{/if}}  conditional block (non-greedy, supports siblings)
+  let prev;
+  do {
+    prev = template;
+    template = template.replace(
+      /\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
+      (_, k, body) => (isTruthy(data[k]) ? body : '')
+    );
+  } while (template !== prev); // re-run in case of adjacent blocks revealing more
+
+  // {{{key}}} → raw HTML
+  template = template.replace(/\{\{\{(\w+)\}\}\}/g, (_, k) => (data[k] != null ? data[k] : ''));
+  // {{key}} → escaped
+  template = template.replace(/\{\{(\w+)\}\}/g, (_, k) => escapeHtml(data[k]));
+  return template;
 }
 
 // ─── Validation for /api/signup ───────────────────────────────────
