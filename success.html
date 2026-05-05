@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>謝謝你 ｜ 今天一定要把事情解決工作坊</title>
+<title>謝謝你 ｜ {{meta_title}}</title>
 <link rel="stylesheet" href="style.css">
 <meta name="theme-color" content="#1F3A5F">
 </head>
 <body class="success-wrap">
 
 <div class="success-card">
-  <h1>謝謝你<br><span class="accent">誠實地填完。</span></h1>
-  <p>我們會在 3-5 個工作天內審核並寄出確認信。<br>記得查收（也記得看垃圾信件夾）。</p>
+  <h1>{{success_title_1}}<br><span class="accent">{{success_title_2}}</span></h1>
+  <p>{{{success_body}}}</p>
 
   <p style="display:none; margin-top:24px;">
     你寫下想完成的事是：<br>
@@ -19,10 +19,10 @@
   </p>
 
   <div class="quote">
-    「我們缺的，<br>只是那一瞬間的勇氣。」
+    {{{success_quote}}}
   </div>
 
-  <a href="index.html" class="home-link">← 回到首頁</a>
+  <a href="index.html" class="home-link">{{success_back}}</a>
 </div>
 
 <script src="script.js" defer></script>

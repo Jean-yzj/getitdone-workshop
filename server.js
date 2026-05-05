@@ -4,8 +4,10 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
+import { CONTENT_SCHEMA, CONTENT_DEFAULTS } from './content-schema.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,11 +31,9 @@ const pool = new pg.Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 });
+pool.on('error', (err) => console.error('Postgres pool error:', err));
 
-pool.on('error', (err) => {
-  console.error('Postgres pool error:', err);
-});
-
+// ─── Schema migration ─────────────────────────────────────────────
 async function migrate() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS signups (
@@ -55,10 +55,60 @@ async function migrate() {
     );
     CREATE INDEX IF NOT EXISTS signups_created_at_idx ON signups (created_at DESC);
     CREATE INDEX IF NOT EXISTS signups_email_idx ON signups (email);
+
+    CREATE TABLE IF NOT EXISTS site_content (
+      key         TEXT PRIMARY KEY,
+      value       TEXT NOT NULL,
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `);
+  // seed any new keys with defaults (don't overwrite existing edits)
+  for (const field of CONTENT_SCHEMA) {
+    await pool.query(
+      'INSERT INTO site_content (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
+      [field.key, field.default]
+    );
+  }
   console.log('DB migration OK');
 }
 
+// ─── Content cache ────────────────────────────────────────────────
+let contentCache = { ...CONTENT_DEFAULTS };
+
+async function loadContent() {
+  const { rows } = await pool.query('SELECT key, value FROM site_content');
+  const next = { ...CONTENT_DEFAULTS };
+  for (const r of rows) next[r.key] = r.value;
+  contentCache = next;
+}
+
+// ─── Templates ────────────────────────────────────────────────────
+function loadTemplate(name) {
+  return fs.readFileSync(path.join(__dirname, name), 'utf8');
+}
+const templates = {
+  'index.html': loadTemplate('index.html'),
+  'success.html': loadTemplate('success.html'),
+};
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function render(template, data) {
+  // {{{key}}} → raw HTML, {{key}} → escaped
+  return template
+    .replace(/\{\{\{(\w+)\}\}\}/g, (_, k) => (data[k] != null ? data[k] : ''))
+    .replace(/\{\{(\w+)\}\}/g, (_, k) => escapeHtml(data[k]));
+}
+
+// ─── Validation for /api/signup ───────────────────────────────────
 const VALID = {
   duration: new Set(['1week', '1month', '3month', 'halfyear', 'year', 'forever']),
   env: new Set(['silent', 'background', 'speak', 'flexible']),
@@ -66,13 +116,8 @@ const VALID = {
   help: new Set(['alone', 'chat', 'review', 'company', 'depends']),
   source: new Set(['ig', 'fb', 'threads', 'line', 'friend', 'other']),
 };
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function asArray(v) {
-  if (v == null) return [];
-  return Array.isArray(v) ? v : [v];
-}
+const asArray = (v) => (v == null ? [] : Array.isArray(v) ? v : [v]);
 
 function validateSignup(body) {
   const errors = [];
@@ -100,12 +145,10 @@ function validateSignup(body) {
   if (pledges !== 4) errors.push('pledges');
   if (notes.length > 2000) errors.push('notes');
 
-  return {
-    errors,
-    cleaned: { name, email, phone, task, duration, env, source, notes, why, help, pledges },
-  };
+  return { errors, cleaned: { name, email, phone, task, duration, env, source, notes, why, help, pledges } };
 }
 
+// ─── Auth ─────────────────────────────────────────────────────────
 function basicAuth(req, res, next) {
   const auth = req.headers.authorization || '';
   if (!auth.startsWith('Basic ')) {
@@ -113,12 +156,8 @@ function basicAuth(req, res, next) {
     return res.status(401).send('Authentication required');
   }
   let decoded = '';
-  try {
-    decoded = Buffer.from(auth.slice(6), 'base64').toString('utf8');
-  } catch {
-    res.set('WWW-Authenticate', 'Basic realm="Admin"');
-    return res.status(401).send('Bad auth');
-  }
+  try { decoded = Buffer.from(auth.slice(6), 'base64').toString('utf8'); }
+  catch { res.set('WWW-Authenticate', 'Basic realm="Admin"'); return res.status(401).send('Bad auth'); }
   const idx = decoded.indexOf(':');
   const password = idx >= 0 ? decoded.slice(idx + 1) : '';
   const expected = Buffer.from(ADMIN_PASSWORD);
@@ -130,34 +169,39 @@ function basicAuth(req, res, next) {
   next();
 }
 
-function csvEscape(v) {
+const csvEscape = (v) => {
   const s = v == null ? '' : String(v);
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
+};
 
+// ─── App ──────────────────────────────────────────────────────────
 const app = express();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
-
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(compression());
-app.use(express.urlencoded({ extended: true, limit: '64kb' }));
-app.use(express.json({ limit: '64kb' }));
+app.use(express.urlencoded({ extended: true, limit: '256kb' }));
+app.use(express.json({ limit: '256kb' }));
 
+// Health
 app.get('/healthz', async (req, res) => {
-  try {
-    await pool.query('SELECT 1');
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(503).json({ ok: false, error: 'db' });
-  }
+  try { await pool.query('SELECT 1'); res.json({ ok: true }); }
+  catch { res.status(503).json({ ok: false, error: 'db' }); }
 });
 
+// Templated pages — must come BEFORE express.static
+function serveTemplate(name) {
+  return (req, res) => {
+    const html = render(templates[name], contentCache);
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  };
+}
+app.get('/', serveTemplate('index.html'));
+app.get('/index.html', serveTemplate('index.html'));
+app.get('/success.html', serveTemplate('success.html'));
+
+// Signup
 const signupLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
@@ -168,49 +212,29 @@ const signupLimiter = rateLimit({
 
 app.post('/api/signup', signupLimiter, async (req, res, next) => {
   try {
-    if (req.body && req.body._gotcha) {
-      return res.redirect(303, '/success.html');
-    }
+    if (req.body && req.body._gotcha) return res.redirect(303, '/success.html');
     const { errors, cleaned } = validateSignup(req.body || {});
-    if (errors.length) {
-      return res.status(400).json({ ok: false, errors });
-    }
+    if (errors.length) return res.status(400).json({ ok: false, errors });
     const ip = (req.headers['x-forwarded-for'] || '').toString().split(',')[0].trim() || req.ip;
     const ua = (req.headers['user-agent'] || '').toString().slice(0, 500);
     const q = `
       INSERT INTO signups (name, email, phone, task, duration, why, env, help, source, notes, pledges, ip, user_agent)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-      RETURNING id
-    `;
+      RETURNING id`;
     const params = [
-      cleaned.name,
-      cleaned.email,
-      cleaned.phone || null,
-      cleaned.task,
-      cleaned.duration,
-      cleaned.why,
-      cleaned.env,
-      cleaned.help,
-      cleaned.source || null,
-      cleaned.notes || null,
-      cleaned.pledges,
-      ip,
-      ua,
+      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.task, cleaned.duration,
+      cleaned.why, cleaned.env, cleaned.help, cleaned.source || null, cleaned.notes || null,
+      cleaned.pledges, ip, ua,
     ];
     const result = await pool.query(q, params);
     console.log(`signup id=${result.rows[0].id} email=${cleaned.email}`);
-    if (req.is('application/json')) {
-      return res.json({ ok: true, id: result.rows[0].id });
-    }
+    if (req.is('application/json')) return res.json({ ok: true, id: result.rows[0].id });
     return res.redirect(303, '/success.html');
-  } catch (e) {
-    next(e);
-  }
+  } catch (e) { next(e); }
 });
 
-app.get('/admin', basicAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
-});
+// ─── Admin: signups ───────────────────────────────────────────────
+app.get('/admin', basicAuth, (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
   try {
@@ -218,9 +242,7 @@ app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
       'SELECT id, created_at, name, email, phone, task, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
     );
     res.json(rows);
-  } catch (e) {
-    next(e);
-  }
+  } catch (e) { next(e); }
 });
 
 app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
@@ -228,30 +250,18 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
     const { rows } = await pool.query(
       'SELECT id, created_at, name, email, phone, task, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
     );
-    const cols = [
-      'id', 'created_at', 'name', 'email', 'phone', 'task',
-      'duration', 'why', 'env', 'help', 'source', 'notes', 'pledges', 'ip',
-    ];
+    const cols = ['id','created_at','name','email','phone','task','duration','why','env','help','source','notes','pledges','ip'];
     const headers = cols.join(',');
-    const body = rows
-      .map((r) =>
-        cols
-          .map((c) => {
-            const v = r[c];
-            if (Array.isArray(v)) return csvEscape(v.join('|'));
-            if (v instanceof Date) return csvEscape(v.toISOString());
-            return csvEscape(v);
-          })
-          .join(',')
-      )
-      .join('\r\n');
-    const filename = `signups-${new Date().toISOString().slice(0, 10)}.csv`;
+    const body = rows.map((r) => cols.map((c) => {
+      const v = r[c];
+      if (Array.isArray(v)) return csvEscape(v.join('|'));
+      if (v instanceof Date) return csvEscape(v.toISOString());
+      return csvEscape(v);
+    }).join(',')).join('\r\n');
     res.set('Content-Type', 'text/csv; charset=utf-8');
-    res.set('Content-Disposition', `attachment; filename="${filename}"`);
+    res.set('Content-Disposition', `attachment; filename="signups-${new Date().toISOString().slice(0,10)}.csv"`);
     res.send('﻿' + headers + '\r\n' + body);
-  } catch (e) {
-    next(e);
-  }
+  } catch (e) { next(e); }
 });
 
 app.delete('/admin/api/signups/:id', basicAuth, async (req, res, next) => {
@@ -260,12 +270,78 @@ app.delete('/admin/api/signups/:id', basicAuth, async (req, res, next) => {
     if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false });
     const r = await pool.query('DELETE FROM signups WHERE id = $1', [id]);
     res.json({ ok: true, deleted: r.rowCount });
-  } catch (e) {
-    next(e);
-  }
+  } catch (e) { next(e); }
 });
 
-app.use(express.static(__dirname, { extensions: ['html'], maxAge: '5m', index: 'index.html' }));
+// ─── Admin: content editor ────────────────────────────────────────
+app.get('/admin/edit', basicAuth, (req, res) => res.sendFile(path.join(__dirname, 'admin-edit.html')));
+
+app.get('/admin/api/content', basicAuth, (req, res) => {
+  // return schema with current values
+  const fields = CONTENT_SCHEMA.map((f) => ({
+    key: f.key,
+    label: f.label,
+    section: f.section,
+    kind: f.kind,
+    hint: f.hint || null,
+    default: f.default,
+    value: contentCache[f.key] != null ? contentCache[f.key] : f.default,
+  }));
+  res.json({ fields });
+});
+
+app.put('/admin/api/content', basicAuth, async (req, res, next) => {
+  try {
+    const updates = req.body && typeof req.body === 'object' ? req.body : null;
+    if (!updates) return res.status(400).json({ ok: false, error: 'invalid_body' });
+    const validKeys = new Set(CONTENT_SCHEMA.map((f) => f.key));
+    const entries = Object.entries(updates).filter(([k]) => validKeys.has(k));
+    if (!entries.length) return res.json({ ok: true, updated: 0 });
+
+    // batch upsert in a transaction
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const [k, v] of entries) {
+        const value = String(v ?? '');
+        if (value.length > 8000) throw new Error(`value too long: ${k}`);
+        await client.query(
+          'INSERT INTO site_content (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()',
+          [k, value]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw e;
+    } finally {
+      client.release();
+    }
+    await loadContent(); // refresh in-memory cache
+    res.json({ ok: true, updated: entries.length });
+  } catch (e) { next(e); }
+});
+
+app.post('/admin/api/content/reset/:key', basicAuth, async (req, res, next) => {
+  try {
+    const key = req.params.key;
+    const field = CONTENT_SCHEMA.find((f) => f.key === key);
+    if (!field) return res.status(404).json({ ok: false });
+    await pool.query(
+      'INSERT INTO site_content (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()',
+      [key, field.default]
+    );
+    await loadContent();
+    res.json({ ok: true, key, value: field.default });
+  } catch (e) { next(e); }
+});
+
+// ─── Static files: explicit whitelist (don't expose server source) ────
+const sendStatic = (file) => (req, res) =>
+  res.sendFile(path.join(__dirname, file), { maxAge: '5m' });
+app.get('/style.css', sendStatic('style.css'));
+app.get('/script.js', sendStatic('script.js'));
+app.use('/assets', express.static(path.join(__dirname, 'assets'), { index: false, maxAge: '1h' }));
 
 app.use((req, res) => res.status(404).send('Not Found'));
 
@@ -276,12 +352,12 @@ app.use((err, req, res, _next) => {
   else res.status(500).json({ ok: false, error: err.message });
 });
 
+// ─── Boot ─────────────────────────────────────────────────────────
 let server;
 async function start() {
   await migrate();
-  server = app.listen(PORT, () => {
-    console.log(`getitdone listening on :${PORT} (${NODE_ENV})`);
-  });
+  await loadContent();
+  server = app.listen(PORT, () => console.log(`getitdone listening on :${PORT} (${NODE_ENV})`));
 }
 
 function shutdown(sig) {
@@ -292,7 +368,4 @@ function shutdown(sig) {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
-start().catch((e) => {
-  console.error('startup failed:', e);
-  process.exit(1);
-});
+start().catch((e) => { console.error('startup failed:', e); process.exit(1); });

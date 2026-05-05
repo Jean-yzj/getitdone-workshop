@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>後台 ｜ 內容編輯</title>
+<style>
+  :root {
+    --navy: #1F3A5F;
+    --cream: #FAF6EE;
+    --line: #E5E0D6;
+    --danger: #c0392b;
+    --ok: #2e7d32;
+    --warn: #B58858;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "PingFang TC", "Segoe UI", sans-serif;
+    background: var(--cream);
+    color: var(--navy);
+    padding: 0;
+    line-height: 1.5;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; padding-top: 80px; }
+  header.bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: var(--navy);
+    color: white;
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  }
+  header.bar h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  header.bar .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; background: rgba(255,255,255,0.15); }
+  .pill.dirty { background: var(--warn); color: white; }
+  .pill.saved { background: var(--ok); color: white; }
+  .pill.err { background: var(--danger); color: white; }
+
+  button, .btn {
+    background: white; color: var(--navy); border: 0;
+    padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 600;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  button:hover, .btn:hover { opacity: 0.9; }
+  button.primary { background: white; color: var(--navy); }
+  button.primary[disabled] { opacity: 0.4; cursor: not-allowed; }
+  button.ghost { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.4); }
+  button.tiny { padding: 4px 10px; font-size: 12px; background: transparent; color: var(--navy); border: 1px solid var(--line); }
+
+  input[type=search] {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1); color: white;
+    font-size: 14px; min-width: 240px;
+  }
+  input[type=search]::placeholder { color: rgba(255,255,255,0.6); }
+  input[type=search]:focus { outline: 2px solid white; outline-offset: -1px; background: rgba(255,255,255,0.18); }
+
+  .help-banner {
+    background: #fff8ec; border-left: 4px solid var(--warn);
+    padding: 14px 18px; border-radius: 8px; margin-bottom: 24px;
+    font-size: 14px; color: #6b4e26;
+  }
+  .help-banner strong { color: var(--warn); }
+  .help-banner code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; font-family: ui-monospace, monospace; font-size: 13px; }
+
+  details.section {
+    background: white; border-radius: 12px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 12px rgba(31, 58, 95, 0.06);
+    overflow: hidden;
+  }
+  details.section[open] { box-shadow: 0 4px 18px rgba(31, 58, 95, 0.10); }
+  details.section > summary {
+    padding: 16px 20px; cursor: pointer;
+    font-weight: 700; font-size: 16px; color: var(--navy);
+    list-style: none;
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(180deg, #fdfbf3 0%, white 100%);
+    border-bottom: 1px solid var(--line);
+  }
+  details.section > summary::-webkit-details-marker { display: none; }
+  details.section > summary::before { content: '▸'; margin-right: 10px; transition: transform 0.15s; opacity: 0.5; }
+  details.section[open] > summary::before { transform: rotate(90deg); }
+  details.section .section-count { font-size: 13px; opacity: 0.6; font-weight: 400; }
+  details.section .section-body { padding: 8px 20px 18px; }
+
+  .field { padding: 14px 0; border-bottom: 1px dashed var(--line); }
+  .field:last-child { border-bottom: 0; }
+  .field-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .field label { font-weight: 600; font-size: 14px; color: var(--navy); }
+  .field .key { color: #999; font-size: 11px; font-family: ui-monospace, monospace; }
+  .field .hint { font-size: 12px; color: #888; margin-top: 2px; margin-bottom: 6px; }
+  .field input[type=text],
+  .field textarea {
+    width: 100%; padding: 8px 12px;
+    border-radius: 8px; border: 1px solid var(--line);
+    font-size: 14px; font-family: inherit;
+    background: #fdfbf3;
+    line-height: 1.5;
+    transition: border-color 0.1s, background 0.1s;
+  }
+  .field input[type=text]:focus,
+  .field textarea:focus {
+    outline: none; border-color: var(--navy);
+    background: white;
+  }
+  .field textarea { min-height: 60px; resize: vertical; }
+  .field.kind-richtext input,
+  .field.kind-richtext textarea {
+    font-family: ui-monospace, "SF Mono", Menaco, monospace;
+    font-size: 13px;
+    background: #f5fafe;
+  }
+  .field-actions { margin-top: 6px; display: flex; gap: 8px; }
+  .field.changed { background: #fff8ec; margin: 0 -10px; padding: 14px 10px; border-radius: 6px; border-bottom: 1px dashed var(--line); }
+  .field.changed::before { content: '● '; color: var(--warn); }
+
+  .empty { text-align: center; padding: 60px; color: #999; background: white; border-radius: 12px; }
+
+  /* sticky save floater */
+  .save-bar {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--navy); color: white;
+    padding: 12px 18px; border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(31, 58, 95, 0.30);
+    display: none; align-items: center; gap: 12px;
+    z-index: 200;
+  }
+  .save-bar.show { display: inline-flex; }
+  .save-bar button { background: white; color: var(--navy); }
+
+  @media (max-width: 700px) {
+    .wrap { padding: 12px; padding-top: 110px; }
+    header.bar { padding: 10px 12px; }
+    header.bar h1 { font-size: 15px; }
+    input[type=search] { min-width: 0; flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <h1>📝 內容編輯後台</h1>
+  <div class="actions">
+    <input type="search" id="q" placeholder="搜尋（label / 內容）…" autocomplete="off">
+    <span class="pill" id="status">載入中⋯⋯</span>
+    <button class="primary" id="save-top" type="button" disabled>儲存全部</button>
+    <a class="btn" href="/" target="_blank">↗ 預覽網站</a>
+    <a class="btn" href="/admin">← 報名後台</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="help-banner">
+    <strong>怎麼用：</strong>
+    在下方欄位改字 → 按右下角或右上角的「儲存」 → 1 秒後 <a href="/" target="_blank">前台</a> 重新整理就會看到改動。
+    每筆右邊「重設」會把那一格還原成原始預設值。
+    註明 <strong>富文字</strong> 的欄位可以用 <code>&lt;br&gt;</code> 換行、<code>&lt;strong&gt;...&lt;/strong&gt;</code> 加粗。
+  </div>
+
+  <div id="content"><div class="empty">載入中⋯⋯</div></div>
+</div>
+
+<div class="save-bar" id="save-floater">
+  <span id="dirty-count">0 筆未儲存</span>
+  <button class="primary" id="save-bottom" type="button">儲存全部</button>
+</div>
+
+<script>
+let originals = {};   // key -> server value (last loaded / saved)
+let fields = [];       // schema metadata array
+
+function esc(s) {
+  return (s == null ? '' : String(s)).replace(/[<>&"']/g, (c) => ({
+    '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function setStatus(text, cls) {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = 'pill' + (cls ? ' ' + cls : '');
+}
+
+function getInputEl(key) { return document.querySelector('[data-key="' + key + '"]'); }
+
+function isDirty(key) {
+  const el = getInputEl(key);
+  if (!el) return false;
+  return el.value !== originals[key];
+}
+
+function updateDirtyState() {
+  let dirty = 0;
+  for (const f of fields) {
+    const wrap = document.querySelector('.field[data-wrap-key="' + f.key + '"]');
+    if (!wrap) continue;
+    if (isDirty(f.key)) {
+      wrap.classList.add('changed');
+      dirty++;
+    } else {
+      wrap.classList.remove('changed');
+    }
+  }
+  const btnTop = document.getElementById('save-top');
+  const btnBot = document.getElementById('save-bottom');
+  const floater = document.getElementById('save-floater');
+  btnTop.disabled = dirty === 0;
+  btnBot.disabled = dirty === 0;
+  document.getElementById('dirty-count').textContent = dirty + ' 筆未儲存';
+  floater.classList.toggle('show', dirty > 0);
+  if (dirty === 0) setStatus('已同步', 'saved');
+  else setStatus(dirty + ' 筆未儲存', 'dirty');
+  return dirty;
+}
+
+async function load() {
+  setStatus('載入中⋯⋯');
+  try {
+    const r = await fetch('/admin/api/content', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    fields = data.fields;
+    originals = Object.fromEntries(fields.map((f) => [f.key, f.value]));
+    render();
+    updateDirtyState();
+  } catch (e) {
+    document.getElementById('content').innerHTML = '<div class="empty">載入失敗：' + esc(e.message) + '</div>';
+    setStatus('載入失敗', 'err');
+  }
+}
+
+function render() {
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  // group by section, preserve schema order
+  const sections = [];
+  const seen = new Map();
+  for (const f of fields) {
+    const matches = !q || f.label.toLowerCase().includes(q) || (f.value || '').toLowerCase().includes(q) || f.key.toLowerCase().includes(q);
+    if (!matches) continue;
+    if (!seen.has(f.section)) {
+      const s = { name: f.section, fields: [] };
+      seen.set(f.section, s);
+      sections.push(s);
+    }
+    seen.get(f.section).fields.push(f);
+  }
+  if (!sections.length) {
+    document.getElementById('content').innerHTML = '<div class="empty">沒有符合的欄位</div>';
+    return;
+  }
+  const html = sections.map((s) => `
+    <details class="section" ${q ? 'open' : ''}>
+      <summary>
+        <span>${esc(s.name)}</span>
+        <span class="section-count">${s.fields.length} 個欄位</span>
+      </summary>
+      <div class="section-body">
+        ${s.fields.map((f) => {
+          const val = (f.value == null ? '' : String(f.value));
+          const isLong = f.kind === 'textarea' || f.kind === 'richtext' || val.length > 80 || val.includes('\n');
+          const tag = isLong ? 'textarea' : 'input';
+          const isRich = f.kind === 'richtext';
+          const inputHtml = isLong
+            ? `<textarea data-key="${esc(f.key)}" rows="${Math.min(8, Math.max(2, val.split('\n').length + 1))}">${esc(val)}</textarea>`
+            : `<input type="text" data-key="${esc(f.key)}" value="${esc(val)}">`;
+          return `<div class="field ${isRich ? 'kind-richtext' : ''}" data-wrap-key="${esc(f.key)}">
+            <div class="field-label-row">
+              <label for="${esc(f.key)}">${esc(f.label)}${isRich ? ' <span style="color:#888;font-size:11px;font-weight:400;">(富文字 — 可用 HTML)</span>' : ''}</label>
+              <span class="key">${esc(f.key)}</span>
+            </div>
+            ${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ''}
+            ${inputHtml}
+            <div class="field-actions">
+              <button class="tiny" type="button" onclick="resetOne('${esc(f.key)}')">重設這格</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </details>`).join('');
+  document.getElementById('content').innerHTML = html;
+  // wire input events
+  document.querySelectorAll('[data-key]').forEach((el) => {
+    el.addEventListener('input', updateDirtyState);
+  });
+}
+
+async function saveAll() {
+  const updates = {};
+  for (const f of fields) {
+    const el = getInputEl(f.key);
+    if (!el) continue;
+    if (el.value !== originals[f.key]) updates[f.key] = el.value;
+  }
+  const n = Object.keys(updates).length;
+  if (!n) return;
+  setStatus('儲存中⋯⋯');
+  try {
+    const r = await fetch('/admin/api/content', {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (!data.ok) throw new Error('save failed');
+    // update originals to reflect saved state
+    for (const [k, v] of Object.entries(updates)) {
+      originals[k] = v;
+      const f = fields.find((x) => x.key === k);
+      if (f) f.value = v;
+    }
+    updateDirtyState();
+    setStatus('已儲存 ' + n + ' 筆 ✓', 'saved');
+    setTimeout(() => updateDirtyState(), 1500);
+  } catch (e) {
+    setStatus('儲存失敗：' + e.message, 'err');
+  }
+}
+
+async function resetOne(key) {
+  if (!confirm('把「' + key + '」還原成預設值？(可以再按儲存才生效)')) return;
+  try {
+    const r = await fetch('/admin/api/content/reset/' + encodeURIComponent(key), {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (!data.ok) throw new Error('reset failed');
+    // update local + UI
+    originals[key] = data.value;
+    const f = fields.find((x) => x.key === key);
+    if (f) f.value = data.value;
+    const el = getInputEl(key);
+    if (el) el.value = data.value;
+    updateDirtyState();
+    setStatus('已重設 ' + key + ' ✓', 'saved');
+  } catch (e) {
+    alert('重設失敗：' + e.message);
+  }
+}
+
+document.getElementById('q').addEventListener('input', () => { render(); updateDirtyState(); });
+document.getElementById('save-top').addEventListener('click', saveAll);
+document.getElementById('save-bottom').addEventListener('click', saveAll);
+
+// Cmd/Ctrl+S to save
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault();
+    saveAll();
+  }
+});
+
+// Warn before leaving with unsaved changes
+window.addEventListener('beforeunload', (e) => {
+  for (const f of fields) {
+    if (isDirty(f.key)) { e.preventDefault(); e.returnValue = ''; return; }
+  }
+});
+
+load();
+</script>
+</body>
+</html>

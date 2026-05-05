@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="今天一定要把事情解決工作坊：用 5 小時，把那件你拖了很久的事完成。20-30 人 · 實體場地 · NT$300。">
-<meta property="og:title" content="今天一定要把事情解決工作坊">
-<meta property="og:description" content="用 5 小時，把那件你拖了很久的事完成。">
+<meta name="description" content="{{meta_description}}">
+<meta property="og:title" content="{{og_title}}">
+<meta property="og:description" content="{{og_description}}">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#1F3A5F">
-<title>今天一定要把事情解決工作坊 ｜ Get It Done</title>
+<title>{{meta_title}}</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -33,21 +33,21 @@
 <header class="hero">
   <div class="hero-inner">
     <div class="hero-text reveal">
-      <span class="hero-tag"><span class="dot"></span>GET IT DONE WORKSHOP · 限額 20-30 人</span>
-      <h1>今天一定要<br><span class="stroke">把事情解決</span></h1>
-      <p class="lead">把 5 小時花在那件你拖了很久的事上。<br>不是社交、不是學習，是真的坐下來，把它做完。</p>
+      <span class="hero-tag"><span class="dot"></span>{{hero_tag}}</span>
+      <h1>{{hero_title_line1}}<br><span class="stroke">{{hero_title_line2}}</span></h1>
+      <p class="lead">{{{hero_subtitle}}}</p>
       <div class="hero-cta">
-        <a href="#signup" class="btn-primary">誠實報名 →</a>
-        <a href="#why" class="btn-ghost">先看看活動</a>
+        <a href="#signup" class="btn-primary">{{hero_btn_primary}}</a>
+        <a href="#why" class="btn-ghost">{{hero_btn_ghost}}</a>
       </div>
     </div>
     <aside class="hero-card reveal">
-      <h3>陪你一起，把事情解決</h3>
-      <p>誠實寫下、專注 5 小時、彼此歡呼</p>
+      <h3>{{hero_card_title}}</h3>
+      <p>{{hero_card_sub}}</p>
       <div class="stat-row">
-        <div class="stat"><div class="num">5</div><div class="lbl">HOURS</div></div>
-        <div class="stat"><div class="num">1</div><div class="lbl">THING</div></div>
-        <div class="stat"><div class="num">20+</div><div class="lbl">PEOPLE</div></div>
+        <div class="stat"><div class="num">{{hero_stat1_num}}</div><div class="lbl">{{hero_stat1_label}}</div></div>
+        <div class="stat"><div class="num">{{hero_stat2_num}}</div><div class="lbl">{{hero_stat2_label}}</div></div>
+        <div class="stat"><div class="num">{{hero_stat3_num}}</div><div class="lbl">{{hero_stat3_label}}</div></div>
       </div>
     </aside>
   </div>
@@ -63,33 +63,33 @@
 <section id="why">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">為什麼辦這場</span>
-      <h2 class="section-title">人類拖延的真相</h2>
-      <p class="section-sub">不是因為事情太難，是因為一直沒人陪我們開始。</p>
+      <span class="section-eyebrow">{{why_eyebrow}}</span>
+      <h2 class="section-title">{{why_title}}</h2>
+      <p class="section-sub">{{why_sub}}</p>
     </div>
     <div class="why-grid">
       <div class="why-card reveal">
         <div class="quote-mark">“</div>
-        <p>一封想傳很久的訊息，<strong>打開又關掉了 20 次</strong>。</p>
+        <p>{{{why_card_1}}}</p>
       </div>
       <div class="why-card reveal">
         <div class="quote-mark">“</div>
-        <p>一份寫到一半的履歷，<strong>停在某個段落整整三個月</strong>。</p>
+        <p>{{{why_card_2}}}</p>
       </div>
       <div class="why-card reveal">
         <div class="quote-mark">“</div>
-        <p>一本買了的書，<strong>書封都還沒拆</strong>。</p>
+        <p>{{{why_card_3}}}</p>
       </div>
       <div class="why-card reveal">
         <div class="quote-mark">“</div>
-        <p>一句想說的話，<strong>憋在心裡半年沒說出口</strong>。</p>
+        <p>{{{why_card_4}}}</p>
       </div>
     </div>
 
     <div class="why-quote reveal">
-      <div class="qt-eyebrow">CORE BELIEF</div>
-      <h3>我們腦袋會浮現的事，<br>本身都在我們的能力範圍內。</h3>
-      <p class="accent-line">沒有人會突然想到要去造火箭。<br>我們缺的，只是那一瞬間的勇氣。</p>
+      <div class="qt-eyebrow">{{belief_eyebrow}}</div>
+      <h3>{{{belief_title}}}</h3>
+      <p class="accent-line">{{{belief_sub}}}</p>
     </div>
   </div>
 </section>
@@ -98,50 +98,50 @@
 <section id="schedule">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">SCHEDULE</span>
-      <h2 class="section-title">五小時，怎麼走完</h2>
-      <p class="section-sub">節奏被設計過，讓你不會卡關太久，也不會無聊。</p>
+      <span class="section-eyebrow">{{schedule_eyebrow}}</span>
+      <h2 class="section-title">{{schedule_title}}</h2>
+      <p class="section-sub">{{schedule_sub}}</p>
     </div>
     <div class="schedule-list reveal">
       <div class="schedule-row">
-        <div class="time">13:00</div>
-        <div class="item">報到 + 寫任務卡<span class="desc">入場領卡，誠實寫下今天要完成的事</span></div>
-        <div class="dur">20 min</div>
+        <div class="time">{{sched_1_time}}</div>
+        <div class="item">{{sched_1_item}}<span class="desc">{{sched_1_desc}}</span></div>
+        <div class="dur">{{sched_1_dur}}</div>
       </div>
       <div class="schedule-row">
-        <div class="time">13:20</div>
-        <div class="item">開場 + 自我介紹<span class="desc">主持人破題，每人 30 秒念出自己的任務</span></div>
-        <div class="dur">20 min</div>
+        <div class="time">{{sched_2_time}}</div>
+        <div class="item">{{sched_2_item}}<span class="desc">{{sched_2_desc}}</span></div>
+        <div class="dur">{{sched_2_dur}}</div>
       </div>
       <div class="schedule-row">
-        <div class="time">13:40</div>
-        <div class="item">第一段衝刺<span class="desc">全員專注做事，現場安靜，可戴耳機</span></div>
-        <div class="dur">70 min</div>
+        <div class="time">{{sched_3_time}}</div>
+        <div class="item">{{sched_3_item}}<span class="desc">{{sched_3_desc}}</span></div>
+        <div class="dur">{{sched_3_dur}}</div>
       </div>
       <div class="schedule-row">
-        <div class="time">14:50</div>
-        <div class="item">能量補給 + 卡關互助<span class="desc">茶水、伸展、卡關的人可以舉手聊聊</span></div>
-        <div class="dur">30 min</div>
+        <div class="time">{{sched_4_time}}</div>
+        <div class="item">{{sched_4_item}}<span class="desc">{{sched_4_desc}}</span></div>
+        <div class="dur">{{sched_4_dur}}</div>
       </div>
       <div class="schedule-row">
-        <div class="time">15:20</div>
-        <div class="item">第二段衝刺<span class="desc">最後一程，60 / 75 / 85 分提醒時間</span></div>
-        <div class="dur">90 min</div>
+        <div class="time">{{sched_5_time}}</div>
+        <div class="item">{{sched_5_item}}<span class="desc">{{sched_5_desc}}</span></div>
+        <div class="dur">{{sched_5_dur}}</div>
       </div>
       <div class="schedule-row">
-        <div class="time">16:50</div>
-        <div class="item">完成度分享<span class="desc">一人 1 分鐘，分享你寫了什麼、做到幾成</span></div>
-        <div class="dur">40 min</div>
+        <div class="time">{{sched_6_time}}</div>
+        <div class="item">{{sched_6_item}}<span class="desc">{{sched_6_desc}}</span></div>
+        <div class="dur">{{sched_6_dur}}</div>
       </div>
       <div class="schedule-row">
-        <div class="time">17:30</div>
-        <div class="item">集體歡呼 + 合照<span class="desc">無論完成度，每個人都被全員歡呼一次</span></div>
-        <div class="dur">20 min</div>
+        <div class="time">{{sched_7_time}}</div>
+        <div class="item">{{sched_7_item}}<span class="desc">{{sched_7_desc}}</span></div>
+        <div class="dur">{{sched_7_dur}}</div>
       </div>
       <div class="schedule-row">
-        <div class="time">17:50</div>
-        <div class="item">下一步約定 / 散場<span class="desc">寫下未完成的下一步，自願交換聯絡</span></div>
-        <div class="dur">10 min</div>
+        <div class="time">{{sched_8_time}}</div>
+        <div class="item">{{sched_8_item}}<span class="desc">{{sched_8_desc}}</span></div>
+        <div class="dur">{{sched_8_dur}}</div>
       </div>
     </div>
   </div>
@@ -151,18 +151,18 @@
 <section id="rules">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">GROUND RULES</span>
-      <h2 class="section-title">七條規則</h2>
-      <p class="section-sub">為了讓每個人都能真的把事情做完，我們約好這幾件事。</p>
+      <span class="section-eyebrow">{{rules_eyebrow}}</span>
+      <h2 class="section-title">{{rules_title}}</h2>
+      <p class="section-sub">{{rules_sub}}</p>
     </div>
     <div class="rule-grid">
-      <div class="rule-card reveal"><div class="rnum">01</div><div><h4>任務必須具體</h4><p>不是「我要變更好」，而是「投 3 家履歷」。</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">02</div><div><h4>5 小時只做這件事</h4><p>不開無關分頁，不做別的工作。</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">03</div><div><h4>手機只能為任務用</h4><p>要打電話、查資料、傳訊息都可以。</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">04</div><div><h4>卡關不要硬撐</h4><p>舉手找人聊 5 分鐘，比卡 30 分鐘有效。</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">05</div><div><h4>完成度不是目的</h4><p>誠實開始，本身就是最大的勝利。</p></div></div>
-      <div class="rule-card reveal"><div class="rnum">06</div><div><h4>不評論別人的任務</h4><p>別人的小事可能比你的大事更難。</p></div></div>
-      <div class="rule-card reveal" style="grid-column: 1 / -1; max-width: 50%; margin: 0 auto;"><div class="rnum">07</div><div><h4>遲到不補時間</h4><p>尊重所有準時到場的人。</p></div></div>
+      <div class="rule-card reveal"><div class="rnum">01</div><div><h4>{{rule_1_title}}</h4><p>{{rule_1_body}}</p></div></div>
+      <div class="rule-card reveal"><div class="rnum">02</div><div><h4>{{rule_2_title}}</h4><p>{{rule_2_body}}</p></div></div>
+      <div class="rule-card reveal"><div class="rnum">03</div><div><h4>{{rule_3_title}}</h4><p>{{rule_3_body}}</p></div></div>
+      <div class="rule-card reveal"><div class="rnum">04</div><div><h4>{{rule_4_title}}</h4><p>{{rule_4_body}}</p></div></div>
+      <div class="rule-card reveal"><div class="rnum">05</div><div><h4>{{rule_5_title}}</h4><p>{{rule_5_body}}</p></div></div>
+      <div class="rule-card reveal"><div class="rnum">06</div><div><h4>{{rule_6_title}}</h4><p>{{rule_6_body}}</p></div></div>
+      <div class="rule-card reveal" style="grid-column: 1 / -1; max-width: 50%; margin: 0 auto;"><div class="rnum">07</div><div><h4>{{rule_7_title}}</h4><p>{{rule_7_body}}</p></div></div>
     </div>
   </div>
 </section>
@@ -171,50 +171,46 @@
 <section id="signup">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">REGISTER</span>
-      <h2 class="section-title">誠實地，報名一次</h2>
-      <p class="section-sub">填寫約 3-5 分鐘。我們會在 3-5 個工作天內審核並寄出確認信。</p>
+      <span class="section-eyebrow">{{signup_eyebrow}}</span>
+      <h2 class="section-title">{{signup_title}}</h2>
+      <p class="section-sub">{{signup_sub}}</p>
     </div>
 
     <div class="form-card reveal">
-      <h3>那件你拖了很久的事，是什麼？</h3>
-      <p class="form-sub">寫下來，我們陪你把它做完。</p>
+      <h3>{{form_card_title}}</h3>
+      <p class="form-sub">{{form_card_sub}}</p>
 
       <form id="signupForm" method="POST" action="/api/signup">
         <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
 
         <div class="form-row">
-          <label>怎麼稱呼你？<span class="req">*</span></label>
-          <input type="text" name="name" required placeholder="本名、暱稱、想被叫的名字都行">
+          <label>{{form_q1_label}}<span class="req">*</span></label>
+          <input type="text" name="name" required placeholder="{{form_q1_ph}}">
         </div>
 
         <div class="form-row">
-          <label>你的 Email<span class="req">*</span></label>
-          <span class="help">確認信、付款方式、場地細節會寄到這裡</span>
+          <label>{{form_q2_label}}<span class="req">*</span></label>
+          <span class="help">{{form_q2_help}}</span>
           <input type="email" name="email" required placeholder="example@email.com">
         </div>
 
         <div class="form-row">
-          <label>手機號碼</label>
-          <span class="help">選填。活動當天若有突發狀況會聯絡你</span>
+          <label>{{form_q3_label}}</label>
+          <span class="help">{{form_q3_help}}</span>
           <input type="tel" name="phone" placeholder="0912-345-678">
         </div>
 
         <div class="form-row">
-          <label>那件你想完成的事是什麼？<span class="req">*</span></label>
-          <span class="help">具體越好。不必宏大，但必須是「真的拖了很久」。</span>
+          <label>{{form_q4_label}}<span class="req">*</span></label>
+          <span class="help">{{form_q4_help}}</span>
           <div class="example-box">
-            <span class="ok">✓</span> 把履歷寫完然後投出 3 家<br>
-            <span class="ok">✓</span> 把 LINE 上那封想了三個月沒傳的訊息傳出去<br>
-            <span class="ok">✓</span> 整理電腦桌面、把不要的檔案刪掉<br>
-            <span class="ng">✘</span> 我想變成更好的人（太抽象）<br>
-            <span class="ng">✘</span> 創業（5 小時不夠）
+            {{{form_q4_examples}}}
           </div>
-          <textarea name="task" required placeholder="誠實寫下那件事⋯⋯"></textarea>
+          <textarea name="task" required placeholder="{{form_q4_ph}}"></textarea>
         </div>
 
         <div class="form-row">
-          <label>這件事拖了多久？<span class="req">*</span></label>
+          <label>{{form_q5_label}}<span class="req">*</span></label>
           <div class="opts">
             <label><input type="radio" name="duration" value="1week" required> 1 週以內</label>
             <label><input type="radio" name="duration" value="1month"> 1 個月以內</label>
@@ -226,7 +222,7 @@
         </div>
 
         <div class="form-row">
-          <label>為什麼一直沒做？<span class="req">*</span><span class="help" style="display:inline; margin-left:4px;">(可複選)</span></label>
+          <label>{{form_q6_label}}<span class="req">*</span><span class="help" style="display:inline; margin-left:4px;">(可複選)</span></label>
           <div class="opts">
             <label><input type="checkbox" name="why" value="busy"> 沒有時間／太忙</label>
             <label><input type="checkbox" name="why" value="dontknow"> 不知道從哪裡開始</label>
@@ -240,7 +236,7 @@
         </div>
 
         <div class="form-row">
-          <label>需要什麼樣的環境？<span class="req">*</span></label>
+          <label>{{form_q7_label}}<span class="req">*</span></label>
           <div class="opts single-col">
             <label><input type="radio" name="env" required value="silent"> 完全安靜，我要戴耳機專心做</label>
             <label><input type="radio" name="env" value="background"> 有一點背景音也可以，不要太吵就好</label>
@@ -250,7 +246,7 @@
         </div>
 
         <div class="form-row">
-          <label>需要哪種協助？<span class="req">*</span><span class="help" style="display:inline; margin-left:4px;">(可複選)</span></label>
+          <label>{{form_q8_label}}<span class="req">*</span><span class="help" style="display:inline; margin-left:4px;">(可複選)</span></label>
           <div class="opts">
             <label><input type="checkbox" name="help" value="alone"> 自己做，不需要被打擾</label>
             <label><input type="checkbox" name="help" value="chat"> 卡住時有人陪聊 5 分鐘</label>
@@ -262,17 +258,17 @@
 
         <!-- Pledge -->
         <div class="pledge-box">
-          <label>請確認你願意：<span class="req" style="color:var(--accent);">*</span></label>
+          <label>{{pledge_label}}<span class="req" style="color:var(--accent);">*</span></label>
           <div class="pledge-list opts single-col" style="margin-top:14px;">
-            <label><input type="checkbox" required name="pledge1"> 我願意全程參加 5 小時，不會中途離開</label>
-            <label><input type="checkbox" required name="pledge2"> 我願意把手機只用在跟任務有關的事</label>
-            <label><input type="checkbox" required name="pledge3"> 我願意在卡關時舉手求助，不獨自硬撐</label>
-            <label><input type="checkbox" required name="pledge4"> 我願意尊重其他人的任務，不評論不打擾</label>
+            <label><input type="checkbox" required name="pledge1"> {{pledge_1}}</label>
+            <label><input type="checkbox" required name="pledge2"> {{pledge_2}}</label>
+            <label><input type="checkbox" required name="pledge3"> {{pledge_3}}</label>
+            <label><input type="checkbox" required name="pledge4"> {{pledge_4}}</label>
           </div>
         </div>
 
         <div class="form-row">
-          <label>從哪裡知道這場活動？</label>
+          <label>{{form_q9_label}}</label>
           <div class="opts">
             <label><input type="radio" name="source" value="ig"> Instagram</label>
             <label><input type="radio" name="source" value="fb"> Facebook</label>
@@ -284,14 +280,14 @@
         </div>
 
         <div class="form-row">
-          <label>還有什麼想讓我們知道的嗎？</label>
-          <span class="help">選填。特殊飲食、無障礙需求、會緊張的地方都可以說</span>
+          <label>{{form_q10_label}}</label>
+          <span class="help">{{form_q10_help}}</span>
           <textarea name="notes" placeholder="(選填)"></textarea>
         </div>
 
         <div class="submit-row">
-          <span class="legal">送出後 3-5 個工作天內會收到審核確認信</span>
-          <button type="submit" class="submit-btn">誠實送出 →</button>
+          <span class="legal">{{form_submit_legal}}</span>
+          <button type="submit" class="submit-btn">{{form_submit_btn}}</button>
         </div>
       </form>
     </div>
@@ -302,33 +298,33 @@
 <section id="faq">
   <div class="container">
     <div class="section-head reveal">
-      <span class="section-eyebrow">FAQ</span>
-      <h2 class="section-title">常見問題</h2>
+      <span class="section-eyebrow">{{faq_eyebrow}}</span>
+      <h2 class="section-title">{{faq_title}}</h2>
     </div>
     <div class="faq-list reveal">
       <details class="faq-item">
-        <summary>我寫的任務真的太小，這樣好嗎？</summary>
-        <div class="ans">完全沒問題。「傳一封訊息」、「整理桌面」、「打那通電話」都是好任務。被你拖了很久的事，本身就值得 5 個小時。</div>
+        <summary>{{faq_1_q}}</summary>
+        <div class="ans">{{faq_1_a}}</div>
       </details>
       <details class="faq-item">
-        <summary>如果我做不到 100%，會不會很丟臉？</summary>
-        <div class="ans">不會。完成度不是這場活動的目的。誠實面對、真的開始，才是。我們會為每個人歡呼，無論完成度。</div>
+        <summary>{{faq_2_q}}</summary>
+        <div class="ans">{{faq_2_a}}</div>
       </details>
       <details class="faq-item">
-        <summary>5 小時都不能做別的工作嗎？</summary>
-        <div class="ans">對。這 5 小時是為了你寫下的那件事。如果你的任務需要工作上的事，請在報名時就寫清楚。</div>
+        <summary>{{faq_3_q}}</summary>
+        <div class="ans">{{faq_3_a}}</div>
       </details>
       <details class="faq-item">
-        <summary>會有人來教我怎麼做嗎？</summary>
-        <div class="ans">不會。這不是課程，是工作坊。主持人會引導節奏、提醒時間、處理卡關，但不會教你做你的事——那件事本來就是你會的。</div>
+        <summary>{{faq_4_q}}</summary>
+        <div class="ans">{{faq_4_a}}</div>
       </details>
       <details class="faq-item">
-        <summary>能不能退費？</summary>
-        <div class="ans">活動前 5 天內可全額退費。5 天內因報名費已用於採購物資與場地保留，恕不退費，但可轉讓給朋友。</div>
+        <summary>{{faq_5_q}}</summary>
+        <div class="ans">{{faq_5_a}}</div>
       </details>
       <details class="faq-item">
-        <summary>會錄影或拍照公開嗎？</summary>
-        <div class="ans">只有合照會徵詢全員同意後拍攝，不會錄製過程。任務內容你不主動分享，我們也不會問。</div>
+        <summary>{{faq_6_q}}</summary>
+        <div class="ans">{{faq_6_a}}</div>
       </details>
     </div>
   </div>
@@ -336,11 +332,11 @@
 
 <!-- ============= Footer ============= -->
 <footer class="foot">
-  <h4>今天一定要把事情解決工作坊</h4>
-  <p>Get It Done · 5 hours · 1 thing · together</p>
-  <p class="tagline">「事情本身不難，我們缺的，只是那一瞬間的勇氣。」</p>
-  <p>📩 聯絡：<a href="mailto:hello@getitdone.tw" style="color:var(--accent-light);">hello@getitdone.tw</a></p>
-  <div class="legal">© 2026 Get It Done Workshop · Made with quiet courage</div>
+  <h4>{{footer_h4}}</h4>
+  <p>{{footer_tagline_en}}</p>
+  <p class="tagline">{{footer_quote}}</p>
+  <p>{{footer_email_label}}<a href="mailto:{{footer_email}}" style="color:var(--accent-light);">{{footer_email}}</a></p>
+  <div class="legal">{{footer_legal}}</div>
 </footer>
 
 <script src="script.js" defer></script>
