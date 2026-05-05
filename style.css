@@ -1,6 +1,6 @@
 /* ===================================================
    今天一定要把事情解決工作坊 — Quiet Premium
-   實習通的清爽信任感 × 懶熊的溫潤手感
+   清爽信任感 × 溫潤手感
    =================================================== */
 
 :root {
@@ -13,9 +13,9 @@
   --mist: #E5E9F0;
   --cream: #FAF6EE;
   --cream-warm: #F4EDDC;
-  --bear: #D4A574;
-  --bear-light: #F4D6B5;
-  --bear-deep: #B58858;
+  --accent: #D4A574;
+  --accent-light: #F4D6B5;
+  --accent-deep: #B58858;
   --ink: #2D3748;
   --ink-soft: #4A5568;
   --gray: #8896A6;
@@ -81,7 +81,7 @@ a:hover { text-decoration: underline; }
   font-size: 15px;
   color: var(--navy);
 }
-.brand .bear-icon {
+.brand .accent-icon {
   width: 32px; height: 32px;
   background: var(--cream-warm);
   border-radius: 50%;
@@ -211,7 +211,7 @@ a:hover { text-decoration: underline; }
   text-decoration: none;
 }
 
-/* Hero visual: bear on a card */
+/* Hero visual: stat card */
 .hero-card {
   position: relative;
   background: linear-gradient(145deg, #FFFFFF 0%, var(--mist) 100%);
@@ -228,7 +228,7 @@ a:hover { text-decoration: underline; }
   background: linear-gradient(145deg, rgba(255,255,255,0.6), rgba(212, 165, 116, 0.1));
   z-index: -1;
 }
-.hero-card .bear-wrap {
+.hero-card .accent-wrap {
   width: 180px; height: 180px;
   margin: 0 auto 20px;
   background: var(--cream-warm);
@@ -237,7 +237,7 @@ a:hover { text-decoration: underline; }
   place-items: center;
   box-shadow: inset 0 4px 16px rgba(212, 165, 116, 0.2);
 }
-.hero-card .bear-wrap svg { width: 70%; height: 70%; }
+.hero-card .accent-wrap svg { width: 70%; height: 70%; }
 .hero-card h3 {
   font-family: var(--font-display);
   font-size: 22px;
@@ -341,7 +341,7 @@ section {
 .why-card .quote-mark {
   font-family: var(--font-display);
   font-size: 40px;
-  color: var(--bear);
+  color: var(--accent);
   line-height: 0.6;
   margin-bottom: 12px;
 }
@@ -359,7 +359,7 @@ section {
   position: relative;
   box-shadow: var(--shadow-deep);
 }
-.why-quote .bear-corner {
+.why-quote .accent-corner {
   position: absolute;
   top: -32px; right: 32px;
   width: 64px; height: 64px;
@@ -368,11 +368,11 @@ section {
   display: grid; place-items: center;
   box-shadow: var(--shadow-soft);
 }
-.why-quote .bear-corner svg { width: 70%; height: 70%; }
+.why-quote .accent-corner svg { width: 70%; height: 70%; }
 .why-quote .qt-eyebrow {
   font-size: 11px;
   letter-spacing: 4px;
-  color: var(--bear);
+  color: var(--accent);
   font-weight: 700;
   text-transform: uppercase;
   margin-bottom: 14px;
@@ -386,7 +386,7 @@ section {
 }
 .why-quote .accent-line {
   font-family: var(--font-display);
-  color: var(--bear-light);
+  color: var(--accent-light);
   font-style: italic;
   font-size: 17px;
 }
@@ -486,7 +486,7 @@ section {
   color: var(--cream);
   position: relative;
 }
-#signup .section-eyebrow { color: var(--bear); }
+#signup .section-eyebrow { color: var(--accent); }
 #signup .section-title { color: var(--cream); }
 #signup .section-sub { color: rgba(250, 246, 238, 0.7); }
 
@@ -500,7 +500,7 @@ section {
   box-shadow: var(--shadow-deep);
   position: relative;
 }
-.form-card .bear-corner {
+.form-card .accent-corner {
   position: absolute;
   top: -36px; right: 32px;
   width: 72px; height: 72px;
@@ -510,7 +510,7 @@ section {
   box-shadow: var(--shadow-soft);
   border: 4px solid var(--cream);
 }
-.form-card .bear-corner svg { width: 70%; height: 70%; }
+.form-card .accent-corner svg { width: 70%; height: 70%; }
 .form-card h3 {
   font-family: var(--font-display);
   font-size: 24px;
@@ -596,7 +596,7 @@ section {
   padding: 14px 18px;
   margin-bottom: 12px;
   font-size: 12px;
-  color: var(--bear-deep);
+  color: var(--accent-deep);
   line-height: 1.85;
 }
 .example-box .ok { color: #2D7A4F; font-weight: 700; }
@@ -615,10 +615,10 @@ section {
   border-color: rgba(250, 246, 238, 0.15);
   color: var(--cream);
 }
-.pledge-box .pledge-list label:hover { border-color: var(--bear); color: var(--bear-light); }
+.pledge-box .pledge-list label:hover { border-color: var(--accent); color: var(--accent-light); }
 .pledge-box .pledge-list label:has(input:checked) {
   background: rgba(212, 165, 116, 0.15);
-  border-color: var(--bear);
+  border-color: var(--accent);
   color: var(--cream);
 }
 
@@ -708,7 +708,7 @@ footer.foot {
   padding: 56px 24px 32px;
   text-align: center;
 }
-.foot-bear {
+.foot-mark {
   width: 56px; height: 56px;
   margin: 0 auto 20px;
   background: var(--cream-warm);
@@ -716,7 +716,7 @@ footer.foot {
   display: grid; place-items: center;
   box-shadow: 0 6px 18px rgba(0,0,0,0.25);
 }
-.foot-bear svg { width: 70%; height: 70%; }
+.foot-mark svg { width: 70%; height: 70%; }
 .foot h4 {
   font-family: var(--font-display);
   font-size: 18px;
@@ -727,7 +727,7 @@ footer.foot {
 .foot p { margin: 0 0 6px; font-size: 13px; }
 .foot .tagline {
   font-style: italic;
-  color: var(--bear-light);
+  color: var(--accent-light);
   font-size: 14px;
   letter-spacing: 1px;
   margin: 14px 0 24px;
@@ -760,7 +760,7 @@ footer.foot {
   box-shadow: var(--shadow-deep);
   position: relative;
 }
-.success-card .bear-big {
+.success-card .accent-big {
   width: 130px; height: 130px;
   margin: 0 auto 24px;
   background: var(--cream-warm);
@@ -768,7 +768,7 @@ footer.foot {
   display: grid; place-items: center;
   box-shadow: inset 0 6px 20px rgba(212, 165, 116, 0.25);
 }
-.success-card .bear-big svg { width: 70%; height: 70%; }
+.success-card .accent-big svg { width: 70%; height: 70%; }
 .success-card h1 {
   font-family: var(--font-display);
   font-size: 30px;
