@@ -303,6 +303,11 @@ const VALUE_LABELS = {
 };
 
 const translateValue = (col, val) => {
+  if (col === 'pledges') {
+    const n = Number(val);
+    if (!Number.isFinite(n)) return val;
+    return n >= 4 ? '全部同意（4 項）' : `${n} / 4 項同意`;
+  }
   const map = VALUE_LABELS[col];
   if (!map) return val;
   if (Array.isArray(val)) return val.map((v) => map[v] || v);
