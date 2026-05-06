@@ -266,15 +266,36 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
       'SELECT id, created_at, name, email, phone, task, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
     );
     const cols = ['id','created_at','name','email','phone','task','duration','why','env','help','source','notes','pledges','ip'];
-    const headers = cols.join(',');
+    const labels = {
+      id: '編號',
+      created_at: '建立時間',
+      name: '姓名',
+      email: '電郵',
+      phone: '電話',
+      task: '任務',
+      duration: '預計時長',
+      why: '原因',
+      env: '環境',
+      help: '需要協助',
+      source: '來源',
+      notes: '備註',
+      pledges: '承諾',
+      ip: 'IP 位址',
+    };
+    const headers = cols.map((c) => csvEscape(labels[c])).join(',');
     const body = rows.map((r) => cols.map((c) => {
       const v = r[c];
       if (Array.isArray(v)) return csvEscape(v.join('|'));
       if (v instanceof Date) return csvEscape(v.toISOString());
       return csvEscape(v);
     }).join(',')).join('\r\n');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = `報名資料-${dateStr}.csv`;
     res.set('Content-Type', 'text/csv; charset=utf-8');
-    res.set('Content-Disposition', `attachment; filename="signups-${new Date().toISOString().slice(0,10)}.csv"`);
+    res.set(
+      'Content-Disposition',
+      `attachment; filename="signups-${dateStr}.csv"; filename*=UTF-8''${encodeURIComponent(filename)}`
+    );
     res.send('﻿' + headers + '\r\n' + body);
   } catch (e) { next(e); }
 });
