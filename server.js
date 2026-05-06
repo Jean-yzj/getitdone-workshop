@@ -260,6 +260,62 @@ app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+const VALUE_LABELS = {
+  duration: {
+    '1week': '1 週以內',
+    '1month': '1 個月以內',
+    '3month': '3 個月以內',
+    'halfyear': '半年以上',
+    'year': '一年以上',
+    'forever': '久到我不想算了',
+  },
+  why: {
+    'busy': '沒有時間／太忙',
+    'dontknow': '不知道從哪裡開始',
+    'afraid': '害怕失敗或被拒絕',
+    'annoying': '覺得太麻煩',
+    'perfectionism': '完美主義在等最完美時機',
+    'emotional': '不想面對裡面的情緒',
+    'alone': '自己一個人做不下去',
+    'other': '其他',
+  },
+  env: {
+    'silent': '完全安靜（戴耳機）',
+    'background': '可有背景音',
+    'speak': '需要能發出聲音',
+    'flexible': '看現場',
+  },
+  help: {
+    'alone': '自己做，不被打擾',
+    'chat': '卡住時陪聊 5 分鐘',
+    'review': '幫忙看一下成品',
+    'company': '陪我打那通電話／訊息',
+    'depends': '看狀況再說',
+  },
+  source: {
+    'ig': 'Instagram',
+    'fb': 'Facebook',
+    'threads': 'Threads',
+    'line': 'LINE 朋友轉發',
+    'friend': '朋友／同事告訴我',
+    'other': '其他',
+  },
+};
+
+const translateValue = (col, val) => {
+  const map = VALUE_LABELS[col];
+  if (!map) return val;
+  if (Array.isArray(val)) return val.map((v) => map[v] || v);
+  return map[val] || val;
+};
+
+const formatTaipeiDateTime = (d) => {
+  // 例：2026-05-06 10:46:27 (UTC+8)
+  const t = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())} ${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}:${pad(t.getUTCSeconds())}`;
+};
+
 app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
@@ -284,8 +340,10 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
     };
     const headers = cols.map((c) => csvEscape(labels[c])).join(',');
     const body = rows.map((r) => cols.map((c) => {
-      const v = r[c];
-      if (Array.isArray(v)) return csvEscape(v.join('|'));
+      let v = r[c];
+      if (c === 'created_at' && v instanceof Date) return csvEscape(formatTaipeiDateTime(v));
+      v = translateValue(c, v);
+      if (Array.isArray(v)) return csvEscape(v.join('、'));
       if (v instanceof Date) return csvEscape(v.toISOString());
       return csvEscape(v);
     }).join(',')).join('\r\n');
