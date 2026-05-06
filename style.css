@@ -523,6 +523,45 @@ section {
   margin: 0 0 28px;
 }
 
+.fee-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--cream-warm);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--r-card);
+  padding: 16px 20px;
+  margin: 0 0 28px;
+}
+.fee-notice .fee-icon {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--cream);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+}
+.fee-notice .fee-text { flex: 1; min-width: 0; }
+.fee-notice .fee-main {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.6;
+}
+.fee-notice .fee-detail {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--accent-deep);
+  line-height: 1.7;
+}
+
 .form-row { margin-bottom: 22px; }
 .form-row label {
   display: block;

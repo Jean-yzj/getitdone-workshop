@@ -180,6 +180,14 @@
       <h3>{{form_card_title}}</h3>
       <p class="form-sub">{{form_card_sub}}</p>
 
+      <div class="fee-notice">
+        <span class="fee-icon" aria-hidden="true">$</span>
+        <div class="fee-text">
+          <p class="fee-main">{{fee_notice_main}}</p>
+          <p class="fee-detail">{{fee_notice_detail}}</p>
+        </div>
+      </div>
+
       <form id="signupForm" method="POST" action="/api/signup">
         <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
 

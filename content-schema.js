@@ -104,6 +104,8 @@ export const CONTENT_SCHEMA = [
   { section: '報名區塊文案', key: 'signup_sub', label: '副標', kind: 'text', default: '填寫約 3-5 分鐘。我們會在 3-5 個工作天內審核並寄出確認信。' },
   { section: '報名區塊文案', key: 'form_card_title', label: '表單卡片大標', kind: 'text', default: '那件你拖了很久的事，是什麼？' },
   { section: '報名區塊文案', key: 'form_card_sub', label: '表單卡片副標', kind: 'text', default: '寫下來，我們陪你把它做完。' },
+  { section: '報名區塊文案', key: 'fee_notice_main', label: '報名費說明 · 主句', kind: 'text', default: '這個活動會收取 NT$ 500 的參與報名費，其中 200 元為押金。' },
+  { section: '報名區塊文案', key: 'fee_notice_detail', label: '報名費說明 · 補充', kind: 'text', default: '（如果你在任務當天有解決自己想要解決的問題，我們會退還 200 元押金。）' },
 
   // Form labels / helpers
   { section: '表單欄位文字', key: 'form_q1_label', label: '欄位 · 稱呼', kind: 'text', default: '怎麼稱呼你？' },
