@@ -280,16 +280,16 @@ const VALUE_LABELS = {
     'other': '其他',
   },
   env: {
-    'silent': '完全安靜（戴耳機）',
-    'background': '可有背景音',
-    'speak': '需要能發出聲音',
-    'flexible': '看現場',
+    'silent': '完全安靜，我要戴耳機專心做',
+    'background': '有一點背景音也可以，不要太吵就好',
+    'speak': '我可能需要打電話／開口說話，需要可以發出聲音的角落',
+    'flexible': '不確定，看現場',
   },
   help: {
-    'alone': '自己做，不被打擾',
-    'chat': '卡住時陪聊 5 分鐘',
-    'review': '幫忙看一下成品',
-    'company': '陪我打那通電話／訊息',
+    'alone': '自己做，不需要被打擾',
+    'chat': '卡住時有人陪聊 5 分鐘',
+    'review': '有人幫我看一下做出來的東西',
+    'company': '陪我打那通電話／傳那封訊息',
     'depends': '看狀況再說',
   },
   source: {
@@ -297,7 +297,7 @@ const VALUE_LABELS = {
     'fb': 'Facebook',
     'threads': 'Threads',
     'line': 'LINE 朋友轉發',
-    'friend': '朋友／同事告訴我',
+    'friend': '朋友／同事直接告訴我',
     'other': '其他',
   },
 };
