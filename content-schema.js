@@ -8,13 +8,13 @@
 export const CONTENT_SCHEMA = [
   // ───── Hero ─────
   { section: 'Hero 主視覺', key: 'hero_tag', label: '上方標籤', kind: 'text',
-    default: 'GET IT DONE WORKSHOP · 限額 20-30 人' },
+    default: 'GET IT DONE WORKSHOP · 限額 30 人' },
   { section: 'Hero 主視覺', key: 'hero_title_line1', label: '主標第 1 行', kind: 'text',
     default: '今天一定要' },
   { section: 'Hero 主視覺', key: 'hero_title_line2', label: '主標第 2 行（粗描邊）', kind: 'text',
     default: '把事情解決' },
   { section: 'Hero 主視覺', key: 'hero_subtitle', label: '副標', kind: 'richtext',
-    hint: '可用 <br> 換行', default: '把 5 小時花在那件你拖了很久的事上。<br>不是社交、不是學習，是真的坐下來，把它做完。' },
+    hint: '可用 <br> 換行', default: '把 5 小時花在那件你拖了很久的事上。<br>時間：5/16（六）｜地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）' },
   { section: 'Hero 主視覺', key: 'hero_btn_primary', label: '主按鈕文字', kind: 'text',
     default: '誠實報名 →' },
   { section: 'Hero 主視覺', key: 'hero_btn_ghost', label: '次要按鈕文字', kind: 'text',
@@ -27,7 +27,7 @@ export const CONTENT_SCHEMA = [
   { section: 'Hero 主視覺', key: 'hero_stat1_label', label: '數字 1 標籤', kind: 'text', default: 'HOURS' },
   { section: 'Hero 主視覺', key: 'hero_stat2_num', label: '數字 2', kind: 'text', default: '1' },
   { section: 'Hero 主視覺', key: 'hero_stat2_label', label: '數字 2 標籤', kind: 'text', default: 'THING' },
-  { section: 'Hero 主視覺', key: 'hero_stat3_num', label: '數字 3', kind: 'text', default: '20+' },
+  { section: 'Hero 主視覺', key: 'hero_stat3_num', label: '數字 3', kind: 'text', default: '30' },
   { section: 'Hero 主視覺', key: 'hero_stat3_label', label: '數字 3 標籤', kind: 'text', default: 'PEOPLE' },
 
   // ───── Why ─────
@@ -177,7 +177,7 @@ export const CONTENT_SCHEMA = [
   // ───── Meta / SEO ─────
   { section: 'SEO / 分享預覽', key: 'meta_title', label: '瀏覽器標題', kind: 'text', default: '今天一定要把事情解決工作坊 ｜ Get It Done' },
   { section: 'SEO / 分享預覽', key: 'meta_description', label: 'meta description', kind: 'textarea',
-    default: '今天一定要把事情解決工作坊：用 5 小時，把那件你拖了很久的事完成。20-30 人 · 實體場地 · NT$300。' },
+    default: '今天一定要把事情解決工作坊：用 5 小時，把那件你拖了很久的事完成。限額 30 人。時間：5/16（六）。地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）。' },
   { section: 'SEO / 分享預覽', key: 'og_title', label: 'OG title（社群分享）', kind: 'text', default: '今天一定要把事情解決工作坊' },
   { section: 'SEO / 分享預覽', key: 'og_description', label: 'OG description', kind: 'text', default: '用 5 小時，把那件你拖了很久的事完成。' },
 ];

@@ -69,6 +69,21 @@ async function migrate() {
       [field.key, field.default]
     );
   }
+  // force-update critical event info requested by organizer
+  const forcedContent = [
+    ['hero_tag', 'GET IT DONE WORKSHOP · 限額 30 人'],
+    ['hero_subtitle', '把 5 小時花在那件你拖了很久的事上。<br>時間：5/16（六）｜地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）'],
+    ['hero_stat3_num', '30'],
+    ['meta_description', '今天一定要把事情解決工作坊：用 5 小時，把那件你拖了很久的事完成。限額 30 人。時間：5/16（六）。地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）。'],
+  ];
+  for (const [key, value] of forcedContent) {
+    await pool.query(
+      `INSERT INTO site_content (key, value)
+       VALUES ($1, $2)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+      [key, value]
+    );
+  }
   console.log('DB migration OK');
 }
 
