@@ -14,7 +14,7 @@ export const CONTENT_SCHEMA = [
   { section: 'Hero 主視覺', key: 'hero_title_line2', label: '主標第 2 行（粗描邊）', kind: 'text',
     default: '把事情解決' },
   { section: 'Hero 主視覺', key: 'hero_subtitle', label: '副標', kind: 'richtext',
-    hint: '可用 <br> 換行', default: '把 5 小時花在那件你拖了很久的事上。<br>時間：5/16（六）｜地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）' },
+    hint: '可用 <br> 換行', default: '把 3 小時花在那件你拖了很久的事上。<br>時間：5/16（六）｜地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）' },
   { section: 'Hero 主視覺', key: 'hero_btn_primary', label: '主按鈕文字', kind: 'text',
     default: '誠實報名 →' },
   { section: 'Hero 主視覺', key: 'hero_btn_ghost', label: '次要按鈕文字', kind: 'text',
@@ -22,7 +22,7 @@ export const CONTENT_SCHEMA = [
   { section: 'Hero 主視覺', key: 'hero_card_title', label: '右側卡片標題', kind: 'text',
     default: '陪你一起，把事情解決' },
   { section: 'Hero 主視覺', key: 'hero_card_sub', label: '右側卡片副標', kind: 'text',
-    default: '誠實寫下、專注 5 小時、彼此歡呼' },
+    default: '誠實寫下、專注 3 小時、彼此歡呼' },
   { section: 'Hero 主視覺', key: 'hero_stat1_num', label: '數字 1', kind: 'text', default: '5' },
   { section: 'Hero 主視覺', key: 'hero_stat1_label', label: '數字 1 標籤', kind: 'text', default: 'HOURS' },
   { section: 'Hero 主視覺', key: 'hero_stat2_num', label: '數字 2', kind: 'text', default: '1' },
@@ -84,7 +84,7 @@ export const CONTENT_SCHEMA = [
   ...[1,2,3,4,5,6,7].flatMap((i) => {
     const defaults = [
       { t: '任務必須具體', b: '不是「我要變更好」，而是「投 3 家履歷」。' },
-      { t: '5 小時只做這件事', b: '不開無關分頁，不做別的工作。' },
+      { t: '3 小時只做這件事', b: '不開無關分頁，不做別的工作。' },
       { t: '手機只能為任務用', b: '要打電話、查資料、傳訊息都可以。' },
       { t: '卡關不要硬撐', b: '舉手找人聊 5 分鐘，比卡 30 分鐘有效。' },
       { t: '完成度不是目的', b: '誠實開始，本身就是最大的勝利。' },
@@ -117,18 +117,24 @@ export const CONTENT_SCHEMA = [
   { section: '表單欄位文字', key: 'form_q4_label', label: '欄位 · 任務', kind: 'text', default: '那件你想完成的事是什麼？' },
   { section: '表單欄位文字', key: 'form_q4_help', label: '欄位 · 任務說明', kind: 'text', default: '具體越好。不必宏大，但必須是「真的拖了很久」。' },
   { section: '表單欄位文字', key: 'form_q4_examples', label: '欄位 · 任務範例（可改）', kind: 'richtext',
-    hint: '可改範例條目，每行用 <br> 分隔', default: `<span class="ok">✓</span> 把履歷寫完然後投出 3 家<br>
-            <span class="ok">✓</span> 把 LINE 上那封想了三個月沒傳的訊息傳出去<br>
-            <span class="ok">✓</span> 整理電腦桌面、把不要的檔案刪掉<br>
-            <span class="ng">✘</span> 我想變成更好的人（太抽象）<br>
-            <span class="ng">✘</span> 創業（5 小時不夠）` },
+    hint: '可改範例條目，每行用 <br> 分隔', default: `<span class="ok">✓</span> 把履歷改完，並投出 3 家職缺<br>
+            <span class="ok">✓</span> 完成作品集一個案例頁，並上傳公開連結<br>
+            <span class="ok">✓</span> 整理求職自我介紹版本，並完成一版可直接使用的面試稿<br>
+            <span class="ng">✘</span> 傳一封訊息（範圍太小）<br>
+            <span class="ng">✘</span> 我想變成更好的人（太抽象）` },
   { section: '表單欄位文字', key: 'form_q4_ph', label: '欄位 · 任務 placeholder', kind: 'text', default: '誠實寫下那件事⋯⋯' },
+  { section: '表單欄位文字', key: 'form_q11_label', label: '欄位 · 三個特別經驗', kind: 'text', default: '請寫下你三個比較特別的經驗' },
+  { section: '表單欄位文字', key: 'form_q11_help', label: '欄位 · 三個特別經驗說明', kind: 'text', default: '可用條列。讓現場夥伴先認識你的背景與實戰經驗。' },
+  { section: '表單欄位文字', key: 'form_q11_ph', label: '欄位 · 三個特別經驗 placeholder', kind: 'text', default: '例如：1) 帶過校園社群 200+ 人 2) 跨領域轉職成功 3) 自學完成第一份 PM 工作' },
+  { section: '表單欄位文字', key: 'form_q12_label', label: '欄位 · 擅長領域', kind: 'text', default: '你擅長的領域是什麼？' },
+  { section: '表單欄位文字', key: 'form_q12_help', label: '欄位 · 擅長領域說明', kind: 'text', default: '請寫你最能提供幫助的主題，讓彼此更快互相支援。' },
+  { section: '表單欄位文字', key: 'form_q12_ph', label: '欄位 · 擅長領域 placeholder', kind: 'text', default: '例如：履歷優化、面試準備、產品企劃、設計提案、前端開發' },
   { section: '表單欄位文字', key: 'form_q5_label', label: '欄位 · 拖了多久', kind: 'text', default: '這件事拖了多久？' },
   { section: '表單欄位文字', key: 'form_q6_label', label: '欄位 · 為什麼沒做', kind: 'text', default: '為什麼一直沒做？' },
   { section: '表單欄位文字', key: 'form_q7_label', label: '欄位 · 環境需求', kind: 'text', default: '需要什麼樣的環境？' },
   { section: '表單欄位文字', key: 'form_q8_label', label: '欄位 · 協助需求', kind: 'text', default: '需要哪種協助？' },
   { section: '表單欄位文字', key: 'pledge_label', label: '請確認你願意：（標題）', kind: 'text', default: '請確認你願意：' },
-  { section: '表單欄位文字', key: 'pledge_1', label: '承諾 1', kind: 'text', default: '我願意全程參加 5 小時，不會中途離開' },
+  { section: '表單欄位文字', key: 'pledge_1', label: '承諾 1', kind: 'text', default: '我願意全程參加 3 小時，不會中途離開' },
   { section: '表單欄位文字', key: 'pledge_2', label: '承諾 2', kind: 'text', default: '我願意把手機只用在跟任務有關的事' },
   { section: '表單欄位文字', key: 'pledge_3', label: '承諾 3', kind: 'text', default: '我願意在卡關時舉手求助，不獨自硬撐' },
   { section: '表單欄位文字', key: 'pledge_4', label: '承諾 4', kind: 'text', default: '我願意尊重其他人的任務，不評論不打擾' },
@@ -143,10 +149,10 @@ export const CONTENT_SCHEMA = [
   { section: '常見問題', key: 'faq_title', label: '主標', kind: 'text', default: '常見問題' },
   ...[1,2,3,4,5,6].flatMap((i) => {
     const defaults = [
-      { q: '我寫的任務真的太小，這樣好嗎？', a: '完全沒問題。「傳一封訊息」、「整理桌面」、「打那通電話」都是好任務。被你拖了很久的事，本身就值得 5 個小時。' },
+      { q: '我寫的任務真的太小，這樣好嗎？', a: '這次我們會建議你寫「有明確產出」的任務，例如：履歷改完並投出、作品集完成一頁並公開。像「傳一封訊息」或「整理桌面」這種範圍太小，建議升級成更完整的任務。' },
       { q: '如果我做不到 100%，會不會很丟臉？', a: '不會。完成度不是這場活動的目的。誠實面對、真的開始，才是。我們會為每個人歡呼，無論完成度。' },
-      { q: '5 小時都不能做別的工作嗎？', a: '對。這 5 小時是為了你寫下的那件事。如果你的任務需要工作上的事，請在報名時就寫清楚。' },
-      { q: '會有人來教我怎麼做嗎？', a: '不會。這不是課程，是工作坊。主持人會引導節奏、提醒時間、處理卡關，但不會教你做你的事——那件事本來就是你會的。' },
+      { q: '3 小時都不能做別的工作嗎？', a: '對。這 3 小時是為了你寫下的那件事。如果你的任務需要工作上的事，請在報名時就寫清楚。' },
+      { q: '會有人來教我怎麼做嗎？', a: '這不是一般課程，但我們會安排幾位有實戰經驗的夥伴在場，讓大家先看見彼此的經驗與做法。主持人會引導節奏、提醒時間、協助你推進，不會代替你完成你的任務。' },
       { q: '能不能退費？', a: '活動前 5 天內可全額退費。5 天內因報名費已用於採購物資與場地保留，恕不退費，但可轉讓給朋友。' },
       { q: '會錄影或拍照公開嗎？', a: '只有合照會徵詢全員同意後拍攝，不會錄製過程。任務內容你不主動分享，我們也不會問。' },
     ][i - 1];
@@ -159,7 +165,7 @@ export const CONTENT_SCHEMA = [
 
   // ───── Footer ─────
   { section: '頁尾', key: 'footer_h4', label: '名稱', kind: 'text', default: '今天一定要把事情解決工作坊' },
-  { section: '頁尾', key: 'footer_tagline_en', label: '英文標語', kind: 'text', default: 'Get It Done · 5 hours · 1 thing · together' },
+  { section: '頁尾', key: 'footer_tagline_en', label: '英文標語', kind: 'text', default: 'Get It Done · 3 hours · 1 thing · together' },
   { section: '頁尾', key: 'footer_quote', label: '尾句金句', kind: 'text', default: '「事情本身不難，我們缺的，只是那一瞬間的勇氣。」' },
   { section: '頁尾', key: 'footer_email_label', label: '聯絡前綴', kind: 'text', default: '📩 聯絡：' },
   { section: '頁尾', key: 'footer_email', label: '聯絡 Email', kind: 'text', default: 'hello@getitdone.tw' },
@@ -177,9 +183,9 @@ export const CONTENT_SCHEMA = [
   // ───── Meta / SEO ─────
   { section: 'SEO / 分享預覽', key: 'meta_title', label: '瀏覽器標題', kind: 'text', default: '今天一定要把事情解決工作坊 ｜ Get It Done' },
   { section: 'SEO / 分享預覽', key: 'meta_description', label: 'meta description', kind: 'textarea',
-    default: '今天一定要把事情解決工作坊：用 5 小時，把那件你拖了很久的事完成。限額 30 人。時間：5/16（六）。地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）。' },
+    default: '今天一定要把事情解決工作坊：用 3 小時，把那件你拖了很久的事完成。限額 30 人。時間：5/16（六）。地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）。' },
   { section: 'SEO / 分享預覽', key: 'og_title', label: 'OG title（社群分享）', kind: 'text', default: '今天一定要把事情解決工作坊' },
-  { section: 'SEO / 分享預覽', key: 'og_description', label: 'OG description', kind: 'text', default: '用 5 小時，把那件你拖了很久的事完成。' },
+  { section: 'SEO / 分享預覽', key: 'og_description', label: 'OG description', kind: 'text', default: '用 3 小時，把那件你拖了很久的事完成。' },
 ];
 
 export const CONTENT_DEFAULTS = Object.fromEntries(CONTENT_SCHEMA.map((f) => [f.key, f.default]));

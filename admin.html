@@ -187,7 +187,7 @@ async function load() {
 function matchesQuery(r, q) {
   if (!q) return true;
   const hay = [
-    r.name, r.email, r.phone, r.task, r.notes,
+    r.name, r.email, r.phone, r.task, r.special_experiences, r.expertise_areas, r.notes,
     DURATION_LABEL[r.duration] || r.duration,
     ENV_LABEL[r.env] || r.env,
     SOURCE_LABEL[r.source] || r.source,
@@ -238,6 +238,8 @@ function render() {
             <div class="extra">
               <div><strong>為什麼一直沒做：</strong>${tags(r.why, WHY_LABEL) || '<span class="ts">未填</span>'}</div>
               <div><strong>需要的協助：</strong>${tags(r.help, HELP_LABEL) || '<span class="ts">未填</span>'}</div>
+              <div style="margin-top:6px;"><strong>三個比較特別的經驗：</strong>${esc(r.special_experiences || '') || '<span class="ts">未填</span>'}</div>
+              <div style="margin-top:6px;"><strong>擅長領域：</strong>${esc(r.expertise_areas || '') || '<span class="ts">未填</span>'}</div>
               ${r.notes ? `<div style="margin-top:6px;"><strong>補充：</strong>${esc(r.notes)}</div>` : ''}
               <div style="margin-top:6px; color:#888;">承諾條款 ${r.pledges}/4 · IP ${esc(r.ip || '')}</div>
             </div>

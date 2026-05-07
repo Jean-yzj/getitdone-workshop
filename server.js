@@ -43,6 +43,8 @@ async function migrate() {
       email        TEXT NOT NULL,
       phone        TEXT,
       task         TEXT NOT NULL,
+      special_experiences TEXT,
+      expertise_areas     TEXT,
       duration     TEXT,
       why          TEXT[],
       env          TEXT,
@@ -62,6 +64,10 @@ async function migrate() {
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+  await pool.query(`
+    ALTER TABLE signups ADD COLUMN IF NOT EXISTS special_experiences TEXT;
+    ALTER TABLE signups ADD COLUMN IF NOT EXISTS expertise_areas TEXT;
+  `);
   // seed any new keys with defaults (don't overwrite existing edits)
   for (const field of CONTENT_SCHEMA) {
     await pool.query(
@@ -72,9 +78,22 @@ async function migrate() {
   // force-update critical event info requested by organizer
   const forcedContent = [
     ['hero_tag', 'GET IT DONE WORKSHOP · 限額 30 人'],
-    ['hero_subtitle', '把 5 小時花在那件你拖了很久的事上。<br>時間：5/16（六）｜地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）'],
+    ['hero_subtitle', '把 3 小時花在那件你拖了很久的事上。<br>時間：5/16（六）｜地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）'],
     ['hero_stat3_num', '30'],
-    ['meta_description', '今天一定要把事情解決工作坊：用 5 小時，把那件你拖了很久的事完成。限額 30 人。時間：5/16（六）。地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）。'],
+    ['meta_description', '今天一定要把事情解決工作坊：用 3 小時，把那件你拖了很久的事完成。限額 30 人。時間：5/16（六）。地址：Garage+ (臺北市中山區中山北路二段 96 號 9 樓後棟）。'],
+    ['hero_card_sub', '誠實寫下、專注 3 小時、彼此歡呼'],
+    ['form_q4_examples', `<span class="ok">✓</span> 把履歷改完，並投出 3 家職缺<br>
+            <span class="ok">✓</span> 完成作品集一個案例頁，並上傳公開連結<br>
+            <span class="ok">✓</span> 整理求職自我介紹版本，並完成一版可直接使用的面試稿<br>
+            <span class="ng">✘</span> 傳一封訊息（範圍太小）<br>
+            <span class="ng">✘</span> 我想變成更好的人（太抽象）`],
+    ['faq_1_a', '這次我們會建議你寫「有明確產出」的任務，例如：履歷改完並投出、作品集完成一頁並公開。像「傳一封訊息」或「整理桌面」這種範圍太小，建議升級成更完整的任務。'],
+    ['faq_3_q', '3 小時都不能做別的工作嗎？'],
+    ['faq_3_a', '對。這 3 小時是為了你寫下的那件事。如果你的任務需要工作上的事，請在報名時就寫清楚。'],
+    ['faq_4_a', '這不是一般課程，但我們會安排幾位有實戰經驗的夥伴在場，讓大家先看見彼此的經驗與做法。主持人會引導節奏、提醒時間、協助你推進，不會代替你完成你的任務。'],
+    ['pledge_1', '我願意全程參加 3 小時，不會中途離開'],
+    ['footer_tagline_en', 'Get It Done · 3 hours · 1 thing · together'],
+    ['og_description', '用 3 小時，把那件你拖了很久的事完成。'],
   ];
   for (const [key, value] of forcedContent) {
     await pool.query(
@@ -155,6 +174,8 @@ function validateSignup(body) {
   const email = String(body.email || '').trim().toLowerCase();
   const phone = String(body.phone || '').trim();
   const task = String(body.task || '').trim();
+  const specialExperiences = String(body.special_experiences || '').trim();
+  const expertiseAreas = String(body.expertise_areas || '').trim();
   const duration = String(body.duration || '').trim();
   const env = String(body.env || '').trim();
   const source = String(body.source || '').trim();
@@ -167,6 +188,8 @@ function validateSignup(body) {
   if (!email || email.length > 254 || !EMAIL_RE.test(email)) errors.push('email');
   if (phone.length > 50) errors.push('phone');
   if (!task || task.length < 3 || task.length > 2000) errors.push('task');
+  if (!specialExperiences || specialExperiences.length < 3 || specialExperiences.length > 2000) errors.push('special_experiences');
+  if (!expertiseAreas || expertiseAreas.length < 3 || expertiseAreas.length > 2000) errors.push('expertise_areas');
   if (!VALID.duration.has(duration)) errors.push('duration');
   if (!VALID.env.has(env)) errors.push('env');
   if (source && !VALID.source.has(source)) errors.push('source');
@@ -175,7 +198,7 @@ function validateSignup(body) {
   if (pledges !== 4) errors.push('pledges');
   if (notes.length > 2000) errors.push('notes');
 
-  return { errors, cleaned: { name, email, phone, task, duration, env, source, notes, why, help, pledges } };
+  return { errors, cleaned: { name, email, phone, task, specialExperiences, expertiseAreas, duration, env, source, notes, why, help, pledges } };
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────
@@ -248,11 +271,11 @@ app.post('/api/signup', signupLimiter, async (req, res, next) => {
     const ip = (req.headers['x-forwarded-for'] || '').toString().split(',')[0].trim() || req.ip;
     const ua = (req.headers['user-agent'] || '').toString().slice(0, 500);
     const q = `
-      INSERT INTO signups (name, email, phone, task, duration, why, env, help, source, notes, pledges, ip, user_agent)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+      INSERT INTO signups (name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip, user_agent)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       RETURNING id`;
     const params = [
-      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.task, cleaned.duration,
+      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.task, cleaned.specialExperiences, cleaned.expertiseAreas, cleaned.duration,
       cleaned.why, cleaned.env, cleaned.help, cleaned.source || null, cleaned.notes || null,
       cleaned.pledges, ip, ua,
     ];
@@ -269,7 +292,7 @@ app.get('/admin', basicAuth, (req, res) => res.sendFile(path.join(__dirname, 'ad
 app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, task, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
     );
     res.json(rows);
   } catch (e) { next(e); }
@@ -339,9 +362,9 @@ const formatTaipeiDateTime = (d) => {
 app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, task, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
     );
-    const cols = ['id','created_at','name','email','phone','task','duration','why','env','help','source','notes','pledges','ip'];
+    const cols = ['id','created_at','name','email','phone','task','special_experiences','expertise_areas','duration','why','env','help','source','notes','pledges','ip'];
     const labels = {
       id: '編號',
       created_at: '建立時間',
@@ -349,6 +372,8 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
       email: '電郵',
       phone: '電話',
       task: '任務',
+      special_experiences: '三個比較特別的經驗',
+      expertise_areas: '擅長領域',
       duration: '預計時長',
       why: '原因',
       env: '環境',
