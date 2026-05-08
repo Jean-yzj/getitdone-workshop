@@ -188,8 +188,8 @@ function validateSignup(body) {
   if (!email || email.length > 254 || !EMAIL_RE.test(email)) errors.push('email');
   if (phone.length > 50) errors.push('phone');
   if (!task || task.length < 3 || task.length > 2000) errors.push('task');
-  if (!specialExperiences || specialExperiences.length < 3 || specialExperiences.length > 2000) errors.push('special_experiences');
-  if (!expertiseAreas || expertiseAreas.length < 3 || expertiseAreas.length > 2000) errors.push('expertise_areas');
+  if (specialExperiences && specialExperiences.length > 2000) errors.push('special_experiences');
+  if (expertiseAreas && expertiseAreas.length > 2000) errors.push('expertise_areas');
   if (!VALID.duration.has(duration)) errors.push('duration');
   if (!VALID.env.has(env)) errors.push('env');
   if (source && !VALID.source.has(source)) errors.push('source');
