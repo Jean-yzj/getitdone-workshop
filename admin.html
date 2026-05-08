@@ -134,6 +134,9 @@ const DURATION_LABEL = {
   '1week': '1 週內', '1month': '1 個月', '3month': '3 個月',
   'halfyear': '半年+', 'year': '一年+', 'forever': '太久了'
 };
+const GRADE_LABEL = {
+  'highschool': '高中', 'university': '大學', 'graduate': '研究所', 'workforce': '出社會'
+};
 const ENV_LABEL = {
   'silent': '🤫 完全安靜', 'background': '🔉 背景音可', 'speak': '📢 可發聲', 'flexible': '🌀 看現場'
 };
@@ -187,7 +190,8 @@ async function load() {
 function matchesQuery(r, q) {
   if (!q) return true;
   const hay = [
-    r.name, r.email, r.phone, r.task, r.special_experiences, r.expertise_areas, r.notes,
+    r.name, r.email, r.phone, r.domain_field, r.task, r.special_experiences, r.expertise_areas, r.notes,
+    GRADE_LABEL[r.grade_level] || r.grade_level,
     DURATION_LABEL[r.duration] || r.duration,
     ENV_LABEL[r.env] || r.env,
     SOURCE_LABEL[r.source] || r.source,
@@ -238,6 +242,8 @@ function render() {
             <div class="extra">
               <div><strong>為什麼一直沒做：</strong>${tags(r.why, WHY_LABEL) || '<span class="ts">未填</span>'}</div>
               <div><strong>需要的協助：</strong>${tags(r.help, HELP_LABEL) || '<span class="ts">未填</span>'}</div>
+              <div style="margin-top:6px;"><strong>年級：</strong>${esc(GRADE_LABEL[r.grade_level] || r.grade_level || '') || '<span class="ts">未填</span>'}</div>
+              <div style="margin-top:6px;"><strong>科系或產業領域：</strong>${esc(r.domain_field || '') || '<span class="ts">未填</span>'}</div>
               <div style="margin-top:6px;"><strong>三個比較特別的經驗：</strong>${esc(r.special_experiences || '') || '<span class="ts">未填</span>'}</div>
               <div style="margin-top:6px;"><strong>擅長領域：</strong>${esc(r.expertise_areas || '') || '<span class="ts">未填</span>'}</div>
               ${r.notes ? `<div style="margin-top:6px;"><strong>補充：</strong>${esc(r.notes)}</div>` : ''}

@@ -42,6 +42,8 @@ async function migrate() {
       name         TEXT NOT NULL,
       email        TEXT NOT NULL,
       phone        TEXT,
+      grade_level  TEXT,
+      domain_field TEXT,
       task         TEXT NOT NULL,
       special_experiences TEXT,
       expertise_areas     TEXT,
@@ -65,6 +67,8 @@ async function migrate() {
     );
   `);
   await pool.query(`
+    ALTER TABLE signups ADD COLUMN IF NOT EXISTS grade_level TEXT;
+    ALTER TABLE signups ADD COLUMN IF NOT EXISTS domain_field TEXT;
     ALTER TABLE signups ADD COLUMN IF NOT EXISTS special_experiences TEXT;
     ALTER TABLE signups ADD COLUMN IF NOT EXISTS expertise_areas TEXT;
   `);
@@ -159,6 +163,7 @@ function render(template, data) {
 
 // ─── Validation for /api/signup ───────────────────────────────────
 const VALID = {
+  grade_level: new Set(['highschool', 'university', 'graduate', 'workforce']),
   duration: new Set(['1week', '1month', '3month', 'halfyear', 'year', 'forever']),
   env: new Set(['silent', 'background', 'speak', 'flexible']),
   why: new Set(['busy', 'dontknow', 'afraid', 'annoying', 'perfectionism', 'emotional', 'alone', 'other']),
@@ -173,6 +178,8 @@ function validateSignup(body) {
   const name = String(body.name || '').trim();
   const email = String(body.email || '').trim().toLowerCase();
   const phone = String(body.phone || '').trim();
+  const gradeLevel = String(body.grade_level || '').trim();
+  const domainField = String(body.domain_field || '').trim();
   const task = String(body.task || '').trim();
   const specialExperiences = String(body.special_experiences || '').trim();
   const expertiseAreas = String(body.expertise_areas || '').trim();
@@ -187,6 +194,8 @@ function validateSignup(body) {
   if (!name || name.length > 100) errors.push('name');
   if (!email || email.length > 254 || !EMAIL_RE.test(email)) errors.push('email');
   if (phone.length > 50) errors.push('phone');
+  if (!VALID.grade_level.has(gradeLevel)) errors.push('grade_level');
+  if (!domainField || domainField.length < 2 || domainField.length > 120) errors.push('domain_field');
   if (!task || task.length < 3 || task.length > 2000) errors.push('task');
   if (specialExperiences && specialExperiences.length > 2000) errors.push('special_experiences');
   if (expertiseAreas && expertiseAreas.length > 2000) errors.push('expertise_areas');
@@ -198,7 +207,7 @@ function validateSignup(body) {
   if (pledges !== 4) errors.push('pledges');
   if (notes.length > 2000) errors.push('notes');
 
-  return { errors, cleaned: { name, email, phone, task, specialExperiences, expertiseAreas, duration, env, source, notes, why, help, pledges } };
+  return { errors, cleaned: { name, email, phone, gradeLevel, domainField, task, specialExperiences, expertiseAreas, duration, env, source, notes, why, help, pledges } };
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────
@@ -271,11 +280,11 @@ app.post('/api/signup', signupLimiter, async (req, res, next) => {
     const ip = (req.headers['x-forwarded-for'] || '').toString().split(',')[0].trim() || req.ip;
     const ua = (req.headers['user-agent'] || '').toString().slice(0, 500);
     const q = `
-      INSERT INTO signups (name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip, user_agent)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+      INSERT INTO signups (name, email, phone, grade_level, domain_field, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip, user_agent)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
       RETURNING id`;
     const params = [
-      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.task, cleaned.specialExperiences, cleaned.expertiseAreas, cleaned.duration,
+      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.gradeLevel, cleaned.domainField, cleaned.task, cleaned.specialExperiences, cleaned.expertiseAreas, cleaned.duration,
       cleaned.why, cleaned.env, cleaned.help, cleaned.source || null, cleaned.notes || null,
       cleaned.pledges, ip, ua,
     ];
@@ -292,13 +301,19 @@ app.get('/admin', basicAuth, (req, res) => res.sendFile(path.join(__dirname, 'ad
 app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, grade_level, domain_field, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
     );
     res.json(rows);
   } catch (e) { next(e); }
 });
 
 const VALUE_LABELS = {
+  grade_level: {
+    'highschool': '高中',
+    'university': '大學',
+    'graduate': '研究所',
+    'workforce': '出社會',
+  },
   duration: {
     '1week': '1 週以內',
     '1month': '1 個月以內',
@@ -362,15 +377,17 @@ const formatTaipeiDateTime = (d) => {
 app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, grade_level, domain_field, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
     );
-    const cols = ['id','created_at','name','email','phone','task','special_experiences','expertise_areas','duration','why','env','help','source','notes','pledges','ip'];
+    const cols = ['id','created_at','name','email','phone','grade_level','domain_field','task','special_experiences','expertise_areas','duration','why','env','help','source','notes','pledges','ip'];
     const labels = {
       id: '編號',
       created_at: '建立時間',
       name: '姓名',
       email: '電郵',
       phone: '電話',
+      grade_level: '年級',
+      domain_field: '科系或產業領域',
       task: '任務',
       special_experiences: '三個比較特別的經驗',
       expertise_areas: '擅長領域',
