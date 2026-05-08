@@ -54,10 +54,24 @@ img, svg { display: block; max-width: 100%; }
 a { color: var(--royal); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* ============= Deadline Banner ============= */
+.deadline-banner {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: var(--navy-deep);
+  color: var(--cream);
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+  padding: 8px 12px;
+}
+
 /* ============= Top Nav ============= */
 .nav {
   position: sticky;
-  top: 0;
+  top: 36px;
   z-index: 50;
   background: rgba(250, 246, 238, 0.85);
   backdrop-filter: saturate(140%) blur(12px);
@@ -107,7 +121,11 @@ a:hover { text-decoration: underline; }
   transition: transform .15s, box-shadow .15s;
 }
 .nav-cta:hover { transform: translateY(-1px); box-shadow: var(--shadow-soft); text-decoration: none; }
-@media (max-width: 720px) { .nav-links a:not(.nav-cta) { display: none; } }
+@media (max-width: 720px) {
+  .deadline-banner { font-size: 13px; padding: 8px 10px; }
+  .nav { top: 34px; }
+  .nav-links a:not(.nav-cta) { display: none; }
+}
 
 /* ============= Hero ============= */
 .hero {
