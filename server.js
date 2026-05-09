@@ -15,6 +15,10 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const DATABASE_URL = process.env.DATABASE_URL;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_OAUTH_REDIRECT_URI = process.env.GOOGLE_OAUTH_REDIRECT_URI || '';
+const GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.compose'];
 
 if (!ADMIN_PASSWORD) {
   console.error('FATAL: ADMIN_PASSWORD env var is required');
@@ -42,8 +46,6 @@ async function migrate() {
       name         TEXT NOT NULL,
       email        TEXT NOT NULL,
       phone        TEXT,
-      grade_level  TEXT,
-      domain_field TEXT,
       task         TEXT NOT NULL,
       special_experiences TEXT,
       expertise_areas     TEXT,
@@ -53,6 +55,7 @@ async function migrate() {
       help         TEXT[],
       source       TEXT,
       notes        TEXT,
+      paid_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
       pledges      INTEGER NOT NULL DEFAULT 0,
       ip           TEXT,
       user_agent   TEXT
@@ -65,12 +68,23 @@ async function migrate() {
       value       TEXT NOT NULL,
       updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS gmail_oauth_tokens (
+      provider       TEXT PRIMARY KEY,
+      email          TEXT,
+      access_token   TEXT,
+      refresh_token  TEXT,
+      scope          TEXT,
+      token_type     TEXT,
+      expiry_date    BIGINT,
+      created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `);
   await pool.query(`
-    ALTER TABLE signups ADD COLUMN IF NOT EXISTS grade_level TEXT;
-    ALTER TABLE signups ADD COLUMN IF NOT EXISTS domain_field TEXT;
     ALTER TABLE signups ADD COLUMN IF NOT EXISTS special_experiences TEXT;
     ALTER TABLE signups ADD COLUMN IF NOT EXISTS expertise_areas TEXT;
+    ALTER TABLE signups ADD COLUMN IF NOT EXISTS paid_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
   `);
   // seed any new keys with defaults (don't overwrite existing edits)
   for (const field of CONTENT_SCHEMA) {
@@ -139,6 +153,35 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+function stripHtml(input) {
+  return String(input || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+}
+
+function firstLine(s) {
+  return String(s || '').split('\n').map((v) => v.trim()).find(Boolean) || '';
+}
+
+function extractEventMeta(content) {
+  const subtitle = stripHtml(content.hero_subtitle || '');
+  const eventTitle = (content.footer_h4 || [content.hero_title_line1, content.hero_title_line2].filter(Boolean).join('')).trim();
+  const eventDate = (subtitle.match(/時間[:：]\s*([^\n｜|]+)/) || [])[1]?.trim() || '';
+  const eventLocation = (subtitle.match(/地址[:：]\s*([^\n]+)/) || [])[1]?.trim() || '';
+  const introLine = firstLine(subtitle.replace(/時間[:：].*/g, '').trim());
+  return {
+    event_title: eventTitle,
+    event_date: eventDate,
+    event_location: eventLocation,
+    event_intro: introLine,
+    fee_notice_main: stripHtml(content.fee_notice_main || ''),
+    fee_notice_detail: stripHtml(content.fee_notice_detail || ''),
+  };
+}
+
 function isTruthy(v) {
   return v != null && v !== '' && v !== '0' && v !== 'false';
 }
@@ -163,7 +206,6 @@ function render(template, data) {
 
 // ─── Validation for /api/signup ───────────────────────────────────
 const VALID = {
-  grade_level: new Set(['highschool', 'university', 'graduate', 'workforce']),
   duration: new Set(['1week', '1month', '3month', 'halfyear', 'year', 'forever']),
   env: new Set(['silent', 'background', 'speak', 'flexible']),
   why: new Set(['busy', 'dontknow', 'afraid', 'annoying', 'perfectionism', 'emotional', 'alone', 'other']),
@@ -178,8 +220,6 @@ function validateSignup(body) {
   const name = String(body.name || '').trim();
   const email = String(body.email || '').trim().toLowerCase();
   const phone = String(body.phone || '').trim();
-  const gradeLevel = String(body.grade_level || '').trim();
-  const domainField = String(body.domain_field || '').trim();
   const task = String(body.task || '').trim();
   const specialExperiences = String(body.special_experiences || '').trim();
   const expertiseAreas = String(body.expertise_areas || '').trim();
@@ -194,11 +234,9 @@ function validateSignup(body) {
   if (!name || name.length > 100) errors.push('name');
   if (!email || email.length > 254 || !EMAIL_RE.test(email)) errors.push('email');
   if (phone.length > 50) errors.push('phone');
-  if (!VALID.grade_level.has(gradeLevel)) errors.push('grade_level');
-  if (!domainField || domainField.length < 2 || domainField.length > 120) errors.push('domain_field');
   if (!task || task.length < 3 || task.length > 2000) errors.push('task');
-  if (specialExperiences && specialExperiences.length > 2000) errors.push('special_experiences');
-  if (expertiseAreas && expertiseAreas.length > 2000) errors.push('expertise_areas');
+  if (!specialExperiences || specialExperiences.length < 3 || specialExperiences.length > 2000) errors.push('special_experiences');
+  if (!expertiseAreas || expertiseAreas.length < 3 || expertiseAreas.length > 2000) errors.push('expertise_areas');
   if (!VALID.duration.has(duration)) errors.push('duration');
   if (!VALID.env.has(env)) errors.push('env');
   if (source && !VALID.source.has(source)) errors.push('source');
@@ -207,7 +245,7 @@ function validateSignup(body) {
   if (pledges !== 4) errors.push('pledges');
   if (notes.length > 2000) errors.push('notes');
 
-  return { errors, cleaned: { name, email, phone, gradeLevel, domainField, task, specialExperiences, expertiseAreas, duration, env, source, notes, why, help, pledges } };
+  return { errors, cleaned: { name, email, phone, task, specialExperiences, expertiseAreas, duration, env, source, notes, why, help, pledges } };
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────
@@ -231,8 +269,189 @@ function basicAuth(req, res, next) {
   next();
 }
 
+function isGmailConfigured() {
+  return Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
+}
+
+function getBaseUrl(req) {
+  const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').toString().split(',')[0].trim();
+  return `${proto}://${req.get('host')}`;
+}
+
+function getGoogleRedirectUri(req) {
+  return GOOGLE_OAUTH_REDIRECT_URI || `${getBaseUrl(req)}/admin/api/gmail/oauth/callback`;
+}
+
+function signState(payload) {
+  const raw = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+  const sig = crypto.createHmac('sha256', ADMIN_PASSWORD).update(raw).digest('base64url');
+  return `${raw}.${sig}`;
+}
+
+function verifyState(state, maxAgeMs = 10 * 60 * 1000) {
+  if (!state || typeof state !== 'string' || !state.includes('.')) return null;
+  const [raw, sig] = state.split('.', 2);
+  const expected = crypto.createHmac('sha256', ADMIN_PASSWORD).update(raw).digest('base64url');
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
+    if (!payload || typeof payload.ts !== 'number') return null;
+    if (Date.now() - payload.ts > maxAgeMs) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+async function getStoredGmailConnection() {
+  const { rows } = await pool.query(
+    'SELECT provider, email, access_token, refresh_token, scope, token_type, expiry_date FROM gmail_oauth_tokens WHERE provider = $1',
+    ['gmail']
+  );
+  return rows[0] || null;
+}
+
+async function saveGmailConnection(tokens, email) {
+  const existing = await getStoredGmailConnection();
+  const next = {
+    email: email || existing?.email || null,
+    access_token: tokens.access_token || existing?.access_token || null,
+    refresh_token: tokens.refresh_token || existing?.refresh_token || null,
+    scope: tokens.scope || existing?.scope || null,
+    token_type: tokens.token_type || existing?.token_type || null,
+    expiry_date: tokens.expiry_date ?? existing?.expiry_date ?? null,
+  };
+  await pool.query(
+    `INSERT INTO gmail_oauth_tokens
+      (provider, email, access_token, refresh_token, scope, token_type, expiry_date, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+     ON CONFLICT (provider) DO UPDATE
+     SET email = EXCLUDED.email,
+         access_token = EXCLUDED.access_token,
+         refresh_token = EXCLUDED.refresh_token,
+         scope = EXCLUDED.scope,
+         token_type = EXCLUDED.token_type,
+         expiry_date = EXCLUDED.expiry_date,
+         updated_at = NOW()`,
+    ['gmail', next.email, next.access_token, next.refresh_token, next.scope, next.token_type, next.expiry_date]
+  );
+}
+
+async function deleteGmailConnection() {
+  await pool.query('DELETE FROM gmail_oauth_tokens WHERE provider = $1', ['gmail']);
+}
+
+async function exchangeGoogleToken(params) {
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(params),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = new Error(data.error_description || data.error || 'google_token_exchange_failed');
+    err.status = 400;
+    throw err;
+  }
+  return {
+    ...data,
+    expiry_date: data.expires_in ? Date.now() + Number(data.expires_in) * 1000 : null,
+  };
+}
+
+async function refreshAccessTokenIfNeeded(connection) {
+  if (!connection) {
+    const err = new Error('gmail_not_connected');
+    err.status = 400;
+    throw err;
+  }
+  const now = Date.now();
+  if (connection.access_token && connection.expiry_date && Number(connection.expiry_date) - now > 60 * 1000) {
+    return connection;
+  }
+  if (!connection.refresh_token) {
+    const err = new Error('gmail_refresh_token_missing');
+    err.status = 400;
+    throw err;
+  }
+  const refreshed = await exchangeGoogleToken({
+    client_id: GOOGLE_CLIENT_ID,
+    client_secret: GOOGLE_CLIENT_SECRET,
+    refresh_token: connection.refresh_token,
+    grant_type: 'refresh_token',
+  });
+  const next = { ...connection, ...refreshed, refresh_token: connection.refresh_token };
+  await saveGmailConnection(next, connection.email);
+  return next;
+}
+
+async function gmailApiFetch(connection, pathname, options = {}) {
+  const auth = await refreshAccessTokenIfNeeded(connection);
+  const response = await fetch(`https://gmail.googleapis.com${pathname}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${auth.access_token}`,
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = new Error(data.error?.message || 'gmail_api_error');
+    err.status = response.status;
+    throw err;
+  }
+  return data;
+}
+
+function replaceTemplateVars(template, data) {
+  return String(template || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key) => {
+    const value = data[key];
+    return value == null ? '' : String(value);
+  });
+}
+
+function encodeMimeSubject(value) {
+  const normalized = String(value || '').replace(/\r?\n/g, ' ').trim();
+  const b64 = Buffer.from(normalized, 'utf8').toString('base64');
+  return `=?UTF-8?B?${b64}?=`;
+}
+
+function toBase64Url(input) {
+  return Buffer.from(input, 'utf8').toString('base64url');
+}
+
+function buildDraftMessage({ to, bcc, subject, body }) {
+  const lines = [
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset="UTF-8"',
+    'Content-Transfer-Encoding: 8bit',
+    `To: ${String(to || '').replace(/\r?\n/g, ' ').trim()}`,
+  ];
+  if (bcc) lines.push(`Bcc: ${String(bcc).replace(/\r?\n/g, ' ').trim()}`);
+  lines.push(`Subject: ${encodeMimeSubject(subject)}`);
+  lines.push('');
+  lines.push(String(body || '').replace(/\r?\n/g, '\r\n'));
+  return toBase64Url(lines.join('\r\n'));
+}
+
+function buildMailTemplateData(signup, content) {
+  return {
+    name: signup.name || '',
+    email: signup.email || '',
+    task: signup.task || '',
+    special_experiences: signup.special_experiences || '',
+    expertise_areas: signup.expertise_areas || '',
+    ...extractEventMeta(content),
+  };
+}
+
 const csvEscape = (v) => {
-  const s = v == null ? '' : String(v);
+  let s = v == null ? '' : String(v);
+  // Prevent CSV/Excel formula injection
+  if (/^[=+\-@]/.test(s)) s = `'${s}`;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
@@ -244,6 +463,28 @@ app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false 
 app.use(compression());
 app.use(express.urlencoded({ extended: true, limit: '256kb' }));
 app.use(express.json({ limit: '256kb' }));
+
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: 'too_many_requests' },
+});
+
+function requireSameOrigin(req, res, next) {
+  const origin = req.headers.origin;
+  const host = req.headers.host;
+  if (!origin || !host) return next();
+  let originHost = '';
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    return res.status(403).json({ ok: false, error: 'invalid_origin' });
+  }
+  if (originHost !== host) return res.status(403).json({ ok: false, error: 'forbidden_origin' });
+  next();
+}
 
 // Health
 app.get('/healthz', async (req, res) => {
@@ -280,11 +521,11 @@ app.post('/api/signup', signupLimiter, async (req, res, next) => {
     const ip = (req.headers['x-forwarded-for'] || '').toString().split(',')[0].trim() || req.ip;
     const ua = (req.headers['user-agent'] || '').toString().slice(0, 500);
     const q = `
-      INSERT INTO signups (name, email, phone, grade_level, domain_field, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip, user_agent)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+      INSERT INTO signups (name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip, user_agent)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
       RETURNING id`;
     const params = [
-      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.gradeLevel, cleaned.domainField, cleaned.task, cleaned.specialExperiences, cleaned.expertiseAreas, cleaned.duration,
+      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.task, cleaned.specialExperiences, cleaned.expertiseAreas, cleaned.duration,
       cleaned.why, cleaned.env, cleaned.help, cleaned.source || null, cleaned.notes || null,
       cleaned.pledges, ip, ua,
     ];
@@ -296,24 +537,140 @@ app.post('/api/signup', signupLimiter, async (req, res, next) => {
 });
 
 // ─── Admin: signups ───────────────────────────────────────────────
+app.use('/admin', adminLimiter);
 app.get('/admin', basicAuth, (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/admin/mail', basicAuth, (req, res) => res.sendFile(path.join(__dirname, 'admin-mail.html')));
 
 app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, grade_level, domain_field, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, paid_confirmed, pledges, ip FROM signups ORDER BY id DESC'
     );
     res.json(rows);
   } catch (e) { next(e); }
 });
 
+app.get('/admin/api/mail-drafts/setup', basicAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges FROM signups ORDER BY id DESC'
+    );
+    const connection = await getStoredGmailConnection();
+    res.json({
+      signups: rows,
+      event: extractEventMeta(contentCache),
+      gmail: {
+        configured: isGmailConfigured(),
+        connected: Boolean(connection),
+        email: connection?.email || null,
+        redirect_uri: isGmailConfigured() ? getGoogleRedirectUri(req) : null,
+      },
+    });
+  } catch (e) { next(e); }
+});
+
+app.get('/admin/api/gmail/oauth/start', basicAuth, (req, res) => {
+  if (!isGmailConfigured()) {
+    return res.status(400).send('Missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET');
+  }
+  const state = signState({ ts: Date.now(), next: '/admin/mail' });
+  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  url.searchParams.set('client_id', GOOGLE_CLIENT_ID);
+  url.searchParams.set('redirect_uri', getGoogleRedirectUri(req));
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('access_type', 'offline');
+  url.searchParams.set('prompt', 'consent');
+  url.searchParams.set('include_granted_scopes', 'true');
+  url.searchParams.set('scope', GMAIL_SCOPES.join(' '));
+  url.searchParams.set('state', state);
+  res.redirect(url.toString());
+});
+
+app.get('/admin/api/gmail/oauth/callback', async (req, res, next) => {
+  try {
+    if (!isGmailConfigured()) return res.status(400).send('Gmail OAuth is not configured');
+    if (req.query.error) return res.redirect('/admin/mail?gmail=denied');
+    const state = verifyState(String(req.query.state || ''));
+    if (!state) return res.status(403).send('Invalid OAuth state');
+    const code = String(req.query.code || '');
+    if (!code) return res.status(400).send('Missing OAuth code');
+
+    const tokens = await exchangeGoogleToken({
+      code,
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      redirect_uri: getGoogleRedirectUri(req),
+      grant_type: 'authorization_code',
+    });
+    const profile = await gmailApiFetch(tokens, '/gmail/v1/users/me/profile');
+    await saveGmailConnection(tokens, profile.emailAddress || null);
+    res.redirect('/admin/mail?gmail=connected');
+  } catch (e) { next(e); }
+});
+
+app.post('/admin/api/gmail/disconnect', basicAuth, requireSameOrigin, async (req, res, next) => {
+  try {
+    await deleteGmailConnection();
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+app.post('/admin/api/gmail/drafts', basicAuth, requireSameOrigin, async (req, res, next) => {
+  try {
+    if (!isGmailConfigured()) {
+      return res.status(400).json({ ok: false, error: 'gmail_not_configured' });
+    }
+    const signupIds = Array.isArray(req.body?.signupIds)
+      ? req.body.signupIds.map((v) => parseInt(v, 10)).filter((v) => Number.isFinite(v) && v > 0)
+      : [];
+    const subjectTemplate = String(req.body?.subject || '').trim();
+    const bodyTemplate = String(req.body?.body || '').trim();
+    const bcc = String(req.body?.bcc || '').trim();
+
+    if (!signupIds.length) return res.status(400).json({ ok: false, error: 'missing_signup_ids' });
+    if (!subjectTemplate) return res.status(400).json({ ok: false, error: 'missing_subject' });
+    if (!bodyTemplate) return res.status(400).json({ ok: false, error: 'missing_body' });
+    if (bcc && !EMAIL_RE.test(bcc)) return res.status(400).json({ ok: false, error: 'invalid_bcc' });
+
+    const connection = await getStoredGmailConnection();
+    if (!connection) return res.status(400).json({ ok: false, error: 'gmail_not_connected' });
+
+    const { rows } = await pool.query(
+      'SELECT id, name, email, task, special_experiences, expertise_areas FROM signups WHERE id = ANY($1::int[]) ORDER BY id DESC',
+      [signupIds]
+    );
+    if (!rows.length) return res.status(404).json({ ok: false, error: 'signups_not_found' });
+
+    const drafts = [];
+    for (const signup of rows) {
+      const data = buildMailTemplateData(signup, contentCache);
+      const subject = replaceTemplateVars(subjectTemplate, data).trim();
+      const body = replaceTemplateVars(bodyTemplate, data).trim();
+      const raw = buildDraftMessage({ to: signup.email, bcc, subject, body });
+      const draft = await gmailApiFetch(connection, '/gmail/v1/users/me/drafts', {
+        method: 'POST',
+        body: JSON.stringify({ message: { raw } }),
+      });
+      drafts.push({
+        signup_id: signup.id,
+        name: signup.name,
+        email: signup.email,
+        draft_id: draft.id,
+        message_id: draft.message?.id || null,
+        subject,
+      });
+    }
+
+    res.json({
+      ok: true,
+      created: drafts.length,
+      drafts,
+      drafts_url: 'https://mail.google.com/mail/u/0/#drafts',
+    });
+  } catch (e) { next(e); }
+});
+
 const VALUE_LABELS = {
-  grade_level: {
-    'highschool': '高中',
-    'university': '大學',
-    'graduate': '研究所',
-    'workforce': '出社會',
-  },
   duration: {
     '1week': '1 週以內',
     '1month': '1 個月以內',
@@ -356,6 +713,9 @@ const VALUE_LABELS = {
 };
 
 const translateValue = (col, val) => {
+  if (col === 'paid_confirmed') {
+    return val ? '已確認' : '未確認';
+  }
   if (col === 'pledges') {
     const n = Number(val);
     if (!Number.isFinite(n)) return val;
@@ -377,17 +737,15 @@ const formatTaipeiDateTime = (d) => {
 app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, grade_level, domain_field, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, paid_confirmed, pledges, ip FROM signups ORDER BY id DESC'
     );
-    const cols = ['id','created_at','name','email','phone','grade_level','domain_field','task','special_experiences','expertise_areas','duration','why','env','help','source','notes','pledges','ip'];
+    const cols = ['id','created_at','name','email','phone','task','special_experiences','expertise_areas','duration','why','env','help','source','notes','paid_confirmed','pledges','ip'];
     const labels = {
       id: '編號',
       created_at: '建立時間',
       name: '姓名',
       email: '電郵',
       phone: '電話',
-      grade_level: '年級',
-      domain_field: '科系或產業領域',
       task: '任務',
       special_experiences: '三個比較特別的經驗',
       expertise_areas: '擅長領域',
@@ -397,6 +755,7 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
       help: '需要協助',
       source: '來源',
       notes: '備註',
+      paid_confirmed: '已確認繳費',
       pledges: '承諾',
       ip: 'IP 位址',
     };
@@ -420,12 +779,28 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-app.delete('/admin/api/signups/:id', basicAuth, async (req, res, next) => {
+app.delete('/admin/api/signups/:id', basicAuth, requireSameOrigin, async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ ok: false });
     const r = await pool.query('DELETE FROM signups WHERE id = $1', [id]);
     res.json({ ok: true, deleted: r.rowCount });
+  } catch (e) { next(e); }
+});
+
+app.patch('/admin/api/signups/:id/payment', basicAuth, requireSameOrigin, async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id) || id <= 0) {
+      return res.status(400).json({ ok: false, error: 'invalid_id' });
+    }
+    const paidConfirmed = Boolean(req.body?.paid_confirmed);
+    const { rows } = await pool.query(
+      'UPDATE signups SET paid_confirmed = $2 WHERE id = $1 RETURNING id, paid_confirmed',
+      [id, paidConfirmed]
+    );
+    if (!rows.length) return res.status(404).json({ ok: false, error: 'not_found' });
+    res.json({ ok: true, signup: rows[0] });
   } catch (e) { next(e); }
 });
 
@@ -446,7 +821,7 @@ app.get('/admin/api/content', basicAuth, (req, res) => {
   res.json({ fields });
 });
 
-app.put('/admin/api/content', basicAuth, async (req, res, next) => {
+app.put('/admin/api/content', basicAuth, requireSameOrigin, async (req, res, next) => {
   try {
     const body = req.body;
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -485,7 +860,7 @@ app.put('/admin/api/content', basicAuth, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-app.post('/admin/api/content/reset/:key', basicAuth, async (req, res, next) => {
+app.post('/admin/api/content/reset/:key', basicAuth, requireSameOrigin, async (req, res, next) => {
   try {
     const key = req.params.key;
     const field = CONTENT_SCHEMA.find((f) => f.key === key);

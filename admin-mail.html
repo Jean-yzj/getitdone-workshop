@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>後台 ｜ Gmail 草稿工具</title>
+<style>
+  :root {
+    --navy: #1f3a5f;
+    --cream: #faf6ee;
+    --line: #e5e0d6;
+    --muted: #66738a;
+    --ok: #2e7d32;
+    --warn: #b26a00;
+    --danger: #b23b2a;
+    --card: #fffdf9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--navy);
+    font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "PingFang TC", "Segoe UI", sans-serif;
+    padding: 24px;
+  }
+  .shell {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  h1, h2, h3, p { margin-top: 0; }
+  h1 { margin-bottom: 6px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .actions, .toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn, button {
+    appearance: none;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    background: var(--navy);
+    color: white;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .ghost {
+    background: transparent;
+    color: var(--navy);
+    border: 1px solid var(--line);
+  }
+  .danger {
+    background: var(--danger);
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 420px minmax(0, 1fr);
+    gap: 18px;
+  }
+  .stack {
+    display: grid;
+    gap: 18px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(31, 58, 95, 0.05);
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #dfe8f5;
+  }
+  .status.ok { background: #e4f4e8; color: var(--ok); }
+  .status.warn { background: #fff0d6; color: var(--warn); }
+  .note, .hint {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .hint code, .note code { background: #f4efe4; padding: 1px 5px; border-radius: 6px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  label {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  input[type="text"], input[type="email"], textarea, input[type="search"] {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: white;
+    color: var(--navy);
+    font: inherit;
+  }
+  textarea {
+    min-height: 140px;
+    resize: vertical;
+  }
+  .subject-box textarea { min-height: 72px; }
+  .body-box textarea { min-height: 420px; }
+  .preview {
+    white-space: pre-wrap;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 260px;
+  }
+  .mini-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .token {
+    background: #eef2f7;
+    color: var(--navy);
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .toolbar {
+    margin-bottom: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    text-align: left;
+    font-size: 14px;
+  }
+  th {
+    background: var(--navy);
+    color: white;
+    font-size: 13px;
+  }
+  tr:last-child td { border-bottom: 0; }
+  .muted { color: var(--muted); }
+  .results {
+    display: grid;
+    gap: 10px;
+  }
+  .result-row {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    background: white;
+  }
+  .error {
+    color: var(--danger);
+    background: #fff2f1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    body { padding: 12px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div>
+      <h1>Gmail 草稿工具</h1>
+      <div class="sub">先連 Gmail，再依這次活動資訊產生錄取通知草稿；只建立草稿，不會直接寄出。</div>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" href="/admin">← 回報名後台</a>
+      <button type="button" class="ghost" id="reloadBtn">↻ 重新整理</button>
+    </div>
+  </div>
+
+  <div id="errorBox"></div>
+
+  <div class="layout">
+    <div class="stack">
+      <section class="card">
+        <h2>1. Gmail 連線</h2>
+        <div id="gmailStatus" class="status">讀取中…</div>
+        <p class="note" id="gmailNote"></p>
+        <div class="actions" id="gmailActions"></div>
+      </section>
+
+      <section class="card">
+        <h2>2. 這次活動資訊</h2>
+        <div class="grid">
+          <label>活動名稱
+            <input type="text" id="eventTitle" readonly>
+          </label>
+          <label>活動日期
+            <input type="text" id="eventDate" readonly>
+          </label>
+          <label style="grid-column: 1 / -1;">活動地點
+            <input type="text" id="eventLocation" readonly>
+          </label>
+          <label style="grid-column: 1 / -1;">活動主軸
+            <textarea id="eventIntro" readonly></textarea>
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>3. 信件參數</h2>
+        <div class="grid">
+          <label>寄件人稱呼
+            <input type="text" id="senderName" placeholder="例如：懶惰熊">
+          </label>
+          <label>署名單位
+            <input type="text" id="organizerName" placeholder="例如：Get It Done Workshop">
+          </label>
+          <label>BCC
+            <input type="email" id="bccEmail" placeholder="例如：you@gmail.com">
+          </label>
+          <label>付款期限
+            <input type="text" id="paymentDeadline" placeholder="例如：5/15（五）22:00">
+          </label>
+          <label>應付金額
+            <input type="text" id="paymentAmount" placeholder="例如：490 元">
+          </label>
+          <label>轉帳銀行
+            <input type="text" id="paymentBank" placeholder="例如：華南銀行 (008)">
+          </label>
+          <label style="grid-column: 1 / -1;">帳號
+            <input type="text" id="paymentAccount" placeholder="例如：777205149778">
+          </label>
+          <label style="grid-column: 1 / -1;">轉帳備註
+            <input type="text" id="paymentNote" placeholder="例如：5/16 活動 + 您的姓名">
+          </label>
+          <label style="grid-column: 1 / -1;">對帳回覆說明
+            <textarea id="paymentReply" placeholder="例如：轉帳完成後，請直接回覆本封信件告知您的帳號末五碼。"></textarea>
+          </label>
+          <label style="grid-column: 1 / -1;">補充亮點
+            <textarea id="extraHighlights" placeholder="一行一點。會自動變成條列重點。"></textarea>
+          </label>
+          <label style="grid-column: 1 / -1;">行前通知時間
+            <input type="text" id="reminderDate" placeholder="例如：活動前一天">
+          </label>
+        </div>
+        <div class="actions" style="margin-top: 14px;">
+          <button type="button" id="generateTemplateBtn">重新帶入這次活動預設信</button>
+        </div>
+        <p class="hint">信件支援變數：<code>{{name}}</code>、<code>{{email}}</code>、<code>{{task}}</code>、<code>{{event_title}}</code>、<code>{{event_date}}</code>、<code>{{event_location}}</code>。</p>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card subject-box">
+        <h2>4. 主旨與內容</h2>
+        <label>主旨
+          <textarea id="subjectInput"></textarea>
+        </label>
+        <label class="body-box" style="margin-top: 12px;">內文
+          <textarea id="bodyInput"></textarea>
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>5. 預覽</h2>
+        <div class="toolbar">
+          <span class="muted" id="previewLabel">尚未選擇收件人</span>
+        </div>
+        <div class="preview" id="previewBox">讀取中…</div>
+      </section>
+
+      <section class="card">
+        <h2>6. 選擇收件人</h2>
+        <div class="toolbar">
+          <input type="search" id="searchInput" placeholder="搜尋姓名 / Email / 任務">
+          <button type="button" class="ghost" id="selectTodayBtn">勾選今天報名</button>
+          <button type="button" class="ghost" id="selectFilteredBtn">全選目前結果</button>
+          <button type="button" class="ghost" id="clearSelectedBtn">清空勾選</button>
+          <span class="muted" id="selectedCount">0 人</span>
+        </div>
+        <div id="recipientsWrap"></div>
+      </section>
+
+      <section class="card">
+        <h2>7. 建立 Gmail 草稿</h2>
+        <div class="actions">
+          <button type="button" id="createDraftsBtn">建立草稿</button>
+        </div>
+        <p class="note">建立後，草稿會進到已連接 Gmail 帳號的草稿匣。你可以回 Gmail 再自行檢查並送出。</p>
+        <div id="resultsBox" class="results"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  signups: [],
+  filtered: [],
+  event: null,
+  gmail: null,
+  selected: new Set(),
+};
+
+const STORAGE_KEY = 'gitd.gmail-draft-tool.v1';
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+function esc(s) {
+  return (s == null ? '' : String(s)).replace(/[<>&"']/g, (c) => ({
+    '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function showError(message) {
+  $('errorBox').innerHTML = message ? `<div class="error">${esc(message)}</div>` : '';
+}
+
+function fmtDate(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value || '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function taipeiDateOnly(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+}
+
+function todayInTaipei() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Taipei',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
+function loadDraftPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveDraftPrefs() {
+  const payload = {
+    senderName: $('senderName').value,
+    organizerName: $('organizerName').value,
+    bccEmail: $('bccEmail').value,
+    paymentDeadline: $('paymentDeadline').value,
+    paymentAmount: $('paymentAmount').value,
+    paymentBank: $('paymentBank').value,
+    paymentAccount: $('paymentAccount').value,
+    paymentNote: $('paymentNote').value,
+    paymentReply: $('paymentReply').value,
+    extraHighlights: $('extraHighlights').value,
+    reminderDate: $('reminderDate').value,
+    subjectInput: $('subjectInput').value,
+    bodyInput: $('bodyInput').value,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function applyPrefs(data) {
+  $('senderName').value = data.senderName || '懶惰熊';
+  $('organizerName').value = data.organizerName || '實習通';
+  $('bccEmail').value = data.bccEmail || state.gmail?.email || '';
+  $('paymentDeadline').value = data.paymentDeadline || '活動前';
+  $('paymentAmount').value = data.paymentAmount || '490 元';
+  $('paymentBank').value = data.paymentBank || '華南銀行（008）';
+  $('paymentAccount').value = data.paymentAccount || '777205149778';
+  $('paymentNote').value = data.paymentNote || '5/16 活動 + 您的姓名';
+  $('paymentReply').value = data.paymentReply || '轉帳完成後，請直接回覆本封信件，告知您的帳號末五碼，以便我們對帳。';
+  $('extraHighlights').value = data.extraHighlights || [
+    '若你有特別想認識的人，或希望現場協助媒合的資源，也歡迎直接回信告訴我們。',
+    '若你有飲料、身體狀況或其他特殊需求，也都可以提前回覆這封信告知我們。'
+  ].join('\n');
+  $('reminderDate').value = data.reminderDate || '5/15（五）';
+  $('subjectInput').value = data.subjectInput || '';
+  $('bodyInput').value = data.bodyInput || '';
+}
+
+function linesFromTextarea(value) {
+  return String(value || '').split('\n').map((v) => v.trim()).filter(Boolean);
+}
+
+function buildDefaultSubject() {
+  return '【審核通過】歡迎參加 5/16（六）今天一定要把事情解決工作坊';
+}
+
+function buildDefaultBody() {
+  const senderName = $('senderName').value.trim() || '主辦人';
+  const organizerName = $('organizerName').value.trim() || '實習通';
+  const paymentDeadline = $('paymentDeadline').value.trim();
+  const paymentAmount = $('paymentAmount').value.trim();
+  const paymentBank = $('paymentBank').value.trim();
+  const paymentAccount = $('paymentAccount').value.trim();
+  const paymentNote = $('paymentNote').value.trim();
+  const paymentReply = $('paymentReply').value.trim();
+  const reminderDate = $('reminderDate').value.trim();
+  const highlights = linesFromTextarea($('extraHighlights').value);
+
+  const lines = [
+    '您好：',
+    '',
+    `我是 ${senderName}。很高興通知你，你的報名已通過審核！我們非常期待在 5/16（六）與你見面，一起參加「今天一定要把事情解決工作坊」。`,
+    '這場活動的初衷很簡單：把 5 小時花在那件你拖了很久的事上。真的坐下來開始一次勇敢的新嘗試，並在一群正在行動的人陪伴下，把事情解決。',
+    '',
+    '活動地點：Garage+ 臺北市中山區中山北路二段 96 號 9 樓後棟',
+  ];
+
+  if (paymentAmount || paymentBank || paymentAccount || paymentDeadline) {
+    lines.push('', '【報名最後一步：完成繳費】', '');
+    lines.push(`為了保留您的參與名額並利於行政作業，請於${paymentDeadline || '活動前'}完成轉帳，確保當天活動參與資格：`);
+    if (paymentAmount) lines.push(`• 應付金額：${paymentAmount}`);
+    if (paymentBank) lines.push(`• 轉帳銀行：${paymentBank}`);
+    if (paymentAccount) lines.push(`• 帳號：${paymentAccount}`);
+    if (paymentNote) lines.push(`• 轉帳備註：${paymentNote}`);
+    if (paymentReply) lines.push(`• 回傳資訊：${paymentReply}`);
+    lines.push('確認收到款項後，我們將正式為您保留名額。');
+  }
+
+  lines.push('', '【後續安排】', '');
+  lines.push('1. 我們會在活動前寄送行前通知，包含場地指引、當天流程與注意事項。');
+  if (highlights.length) {
+    highlights.forEach((item, idx) => lines.push(`${idx + 2}. ${item}`));
+  } else {
+    lines.push('2. 若你有特別想認識的人，或希望現場協助媒合的資源，也歡迎直接回信告訴我們。');
+    lines.push('3. 若你有飲料、身體狀況或其他特殊需求，也都可以提前回覆這封信告知我們。');
+  }
+  lines.push('', '這不是一場要你表現得很厲害的活動，而是一場讓你誠實面對自己、真的開始動手的聚會。');
+  lines.push(`期待 5/16（六）見到你。`);
+  lines.push('', `${senderName} 與 ${organizerName} 敬上`);
+  return lines.join('\n');
+}
+
+function fillTemplate(template, signup) {
+  const vars = {
+    name: signup?.name || '',
+    email: signup?.email || '',
+    task: signup?.task || '',
+    event_title: state.event?.event_title || '',
+    event_date: state.event?.event_date || '',
+    event_location: state.event?.event_location || '',
+  };
+  return String(template || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key) => vars[key] == null ? '' : String(vars[key]));
+}
+
+function updatePreview() {
+  const signup = state.signups.find((item) => state.selected.has(item.id)) || state.signups[0] || null;
+  $('previewLabel').textContent = signup ? `預覽對象：${signup.name} <${signup.email}>` : '尚未有收件人資料';
+  const subject = fillTemplate($('subjectInput').value, signup);
+  const body = fillTemplate($('bodyInput').value, signup);
+  $('previewBox').textContent = subject ? `主旨：${subject}\n\n${body}` : body || '尚未產生內容';
+}
+
+function updateSelectedCount() {
+  $('selectedCount').textContent = `${state.selected.size} 人`;
+}
+
+function renderGmailStatus() {
+  const gmail = state.gmail || {};
+  const statusEl = $('gmailStatus');
+  const noteEl = $('gmailNote');
+  const actionsEl = $('gmailActions');
+
+  if (!gmail.configured) {
+    statusEl.className = 'status warn';
+    statusEl.textContent = '尚未設定 Google OAuth';
+    noteEl.innerHTML = '請先在 Zeabur 設定 <code>GOOGLE_CLIENT_ID</code>、<code>GOOGLE_CLIENT_SECRET</code>，如需固定 callback，也可補 <code>GOOGLE_OAUTH_REDIRECT_URI</code>。';
+    actionsEl.innerHTML = '';
+    return;
+  }
+
+  if (gmail.connected) {
+    statusEl.className = 'status ok';
+    statusEl.textContent = `已連接 ${gmail.email || 'Gmail'}`;
+    noteEl.textContent = '建立草稿時會直接寫進這個 Gmail 帳號的草稿匣。';
+    actionsEl.innerHTML = '<button type="button" class="ghost" id="reconnectBtn">重新授權</button><button type="button" class="danger" id="disconnectBtn">中斷連線</button>';
+    $('reconnectBtn').addEventListener('click', () => { location.href = '/admin/api/gmail/oauth/start'; });
+    $('disconnectBtn').addEventListener('click', disconnectGmail);
+    return;
+  }
+
+  statusEl.className = 'status';
+  statusEl.textContent = '尚未連接 Gmail';
+  noteEl.textContent = '點下面按鈕後會跳去 Google 同意畫面，授權完成會回到這個後台頁。';
+  actionsEl.innerHTML = '<button type="button" id="connectBtn">連接 Gmail</button>';
+  $('connectBtn').addEventListener('click', () => { location.href = '/admin/api/gmail/oauth/start'; });
+}
+
+function renderRecipients() {
+  const q = $('searchInput').value.trim().toLowerCase();
+  state.filtered = state.signups.filter((row) => {
+    if (!q) return true;
+    return [row.name, row.email, row.task].join(' ').toLowerCase().includes(q);
+  });
+
+  if (!state.filtered.length) {
+    $('recipientsWrap').innerHTML = '<div class="note">沒有符合的報名者。</div>';
+    updateSelectedCount();
+    updatePreview();
+    return;
+  }
+
+  const rows = state.filtered.map((row) => `
+    <tr>
+      <td><input type="checkbox" data-id="${row.id}" ${state.selected.has(row.id) ? 'checked' : ''}></td>
+      <td>${esc(row.name)}</td>
+      <td>${esc(row.email)}</td>
+      <td>${esc(row.task || '')}</td>
+      <td class="muted">${esc(fmtDate(row.created_at))}</td>
+    </tr>
+  `).join('');
+
+  $('recipientsWrap').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>姓名</th>
+          <th>Email</th>
+          <th>任務</th>
+          <th>報名時間</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  $('recipientsWrap').querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const id = Number(input.dataset.id);
+      if (input.checked) state.selected.add(id);
+      else state.selected.delete(id);
+      updateSelectedCount();
+      updatePreview();
+    });
+  });
+
+  updateSelectedCount();
+  updatePreview();
+}
+
+async function disconnectGmail() {
+  if (!confirm('確定要中斷目前 Gmail 連線？')) return;
+  showError('');
+  const r = await fetch('/admin/api/gmail/disconnect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    showError(data.error || '無法中斷 Gmail 連線');
+    return;
+  }
+  await load();
+}
+
+function regenerateTemplate() {
+  $('subjectInput').value = buildDefaultSubject();
+  $('bodyInput').value = buildDefaultBody();
+  saveDraftPrefs();
+  updatePreview();
+}
+
+async function createDrafts() {
+  showError('');
+  if (!state.gmail?.configured) return showError('Google OAuth 尚未設定，請先補環境變數。');
+  if (!state.gmail?.connected) return showError('請先連接 Gmail。');
+  if (!state.selected.size) return showError('請至少勾選一位收件人。');
+
+  const payload = {
+    signupIds: Array.from(state.selected),
+    bcc: $('bccEmail').value.trim(),
+    subject: $('subjectInput').value,
+    body: $('bodyInput').value,
+  };
+
+  const btn = $('createDraftsBtn');
+  btn.disabled = true;
+  btn.textContent = '建立中…';
+  $('resultsBox').innerHTML = '';
+
+  try {
+    const r = await fetch('/admin/api/gmail/drafts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+
+    $('resultsBox').innerHTML = `
+      <div class="result-row">
+        <strong>已建立 ${data.created} 封草稿。</strong><br>
+        <a href="${esc(data.drafts_url)}" target="_blank" rel="noreferrer">前往 Gmail 草稿匣</a>
+      </div>
+      ${data.drafts.map((draft) => `
+        <div class="result-row">
+          <strong>${esc(draft.name)}</strong> · ${esc(draft.email)}<br>
+          <span class="muted">${esc(draft.subject)}</span><br>
+          <span class="muted">Draft ID: ${esc(draft.draft_id)}</span>
+        </div>
+      `).join('')}
+    `;
+    window.open(data.drafts_url, '_blank', 'noopener,noreferrer');
+  } catch (err) {
+    showError(err.message || '建立草稿失敗');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '建立草稿';
+  }
+}
+
+async function load() {
+  showError('');
+  $('recipientsWrap').innerHTML = '<div class="note">載入中…</div>';
+  $('previewBox').textContent = '載入中…';
+  const r = await fetch('/admin/api/mail-drafts/setup', { credentials: 'same-origin' });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    showError(data.error || ('HTTP ' + r.status));
+    return;
+  }
+
+  state.signups = data.signups || [];
+  state.event = data.event || {};
+  state.gmail = data.gmail || {};
+
+  $('eventTitle').value = state.event.event_title || '';
+  $('eventDate').value = state.event.event_date || '';
+  $('eventLocation').value = state.event.event_location || '';
+  $('eventIntro').value = state.event.event_intro || '';
+
+  applyPrefs(loadDraftPrefs());
+  renderGmailStatus();
+  if (!$('subjectInput').value.trim() || !$('bodyInput').value.trim()) regenerateTemplate();
+  if (!state.selected.size) {
+    const today = todayInTaipei();
+    state.signups
+      .filter((row) => taipeiDateOnly(row.created_at) === today)
+      .forEach((row) => state.selected.add(row.id));
+  }
+  renderRecipients();
+  updatePreview();
+}
+
+document.querySelectorAll('input, textarea').forEach((el) => {
+  el.addEventListener('input', () => {
+    saveDraftPrefs();
+    updatePreview();
+    if (el === $('searchInput')) renderRecipients();
+  });
+});
+
+$('reloadBtn').addEventListener('click', load);
+$('generateTemplateBtn').addEventListener('click', regenerateTemplate);
+$('selectTodayBtn').addEventListener('click', () => {
+  const today = todayInTaipei();
+  state.signups
+    .filter((row) => taipeiDateOnly(row.created_at) === today)
+    .forEach((row) => state.selected.add(row.id));
+  renderRecipients();
+});
+$('selectFilteredBtn').addEventListener('click', () => {
+  state.filtered.forEach((row) => state.selected.add(row.id));
+  renderRecipients();
+});
+$('clearSelectedBtn').addEventListener('click', () => {
+  state.selected.clear();
+  renderRecipients();
+});
+$('createDraftsBtn').addEventListener('click', createDrafts);
+$('searchInput').addEventListener('input', renderRecipients);
+
+load().catch((err) => showError(err.message || '載入失敗'));
+</script>
+</body>
+</html>
