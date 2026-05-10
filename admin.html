@@ -89,6 +89,7 @@
   tr:last-child td { border-bottom: 0; }
   tr:hover td { background: #fafaf6; }
   td.task { max-width: 360px; min-width: 240px; white-space: pre-wrap; word-break: break-word; }
+  td.profile { max-width: 220px; min-width: 180px; white-space: pre-wrap; word-break: break-word; }
   td.tight { white-space: nowrap; }
   td .tag { display: inline-block; background: #eef2f7; color: var(--navy); padding: 2px 8px; border-radius: 6px; font-size: 12px; margin: 1px 2px 1px 0; }
   td .ts { color: #66738a; font-size: 12px; }
@@ -227,6 +228,8 @@ function render() {
       <th>姓名</th>
       <th>Email</th>
       <th>電話</th>
+      <th>特別經驗 / 背景</th>
+      <th>擅長領域 / 階段</th>
       <th>那件想完成的事</th>
       <th>拖了</th>
       <th>環境</th>
@@ -241,6 +244,8 @@ function render() {
         <td class="tight">${esc(r.name)}</td>
         <td class="tight"><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></td>
         <td class="tight">${esc(r.phone || '')}</td>
+        <td class="profile">${esc(r.special_experiences || '') || '<span class="ts">未填</span>'}</td>
+        <td class="profile">${esc(r.expertise_areas || '') || '<span class="ts">未填</span>'}</td>
         <td class="task">
           ${esc(r.task)}
           <details class="row-detail">
@@ -248,8 +253,6 @@ function render() {
             <div class="extra">
               <div><strong>為什麼一直沒做：</strong>${tags(r.why, WHY_LABEL) || '<span class="ts">未填</span>'}</div>
               <div><strong>需要的協助：</strong>${tags(r.help, HELP_LABEL) || '<span class="ts">未填</span>'}</div>
-              <div style="margin-top:6px;"><strong>三個比較特別的經驗：</strong>${esc(r.special_experiences || '') || '<span class="ts">未填</span>'}</div>
-              <div style="margin-top:6px;"><strong>擅長領域：</strong>${esc(r.expertise_areas || '') || '<span class="ts">未填</span>'}</div>
               ${r.notes ? `<div style="margin-top:6px;"><strong>補充：</strong>${esc(r.notes)}</div>` : ''}
               <div style="margin-top:6px; color:#888;">承諾條款 ${r.pledges}/4 · IP ${esc(r.ip || '')}</div>
             </div>
