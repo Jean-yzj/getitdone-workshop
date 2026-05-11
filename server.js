@@ -49,6 +49,7 @@ async function migrate() {
       task         TEXT NOT NULL,
       special_experiences TEXT,
       expertise_areas     TEXT,
+      current_stage       TEXT,
       duration     TEXT,
       why          TEXT[],
       env          TEXT,
@@ -84,6 +85,7 @@ async function migrate() {
   await pool.query(`
     ALTER TABLE signups ADD COLUMN IF NOT EXISTS special_experiences TEXT;
     ALTER TABLE signups ADD COLUMN IF NOT EXISTS expertise_areas TEXT;
+    ALTER TABLE signups ADD COLUMN IF NOT EXISTS current_stage TEXT;
     ALTER TABLE signups ADD COLUMN IF NOT EXISTS paid_confirmed BOOLEAN NOT NULL DEFAULT FALSE;
   `);
   // seed any new keys with defaults (don't overwrite existing edits)
@@ -223,6 +225,7 @@ function validateSignup(body) {
   const task = String(body.task || '').trim();
   const specialExperiences = String(body.special_experiences || '').trim();
   const expertiseAreas = String(body.expertise_areas || '').trim();
+  const currentStage = String(body.current_stage || '').trim();
   const duration = String(body.duration || '').trim();
   const env = String(body.env || '').trim();
   const source = String(body.source || '').trim();
@@ -237,6 +240,7 @@ function validateSignup(body) {
   if (!task || task.length < 3 || task.length > 2000) errors.push('task');
   if (!specialExperiences || specialExperiences.length < 3 || specialExperiences.length > 2000) errors.push('special_experiences');
   if (!expertiseAreas || expertiseAreas.length < 3 || expertiseAreas.length > 2000) errors.push('expertise_areas');
+  if (!currentStage || currentStage.length < 2 || currentStage.length > 1000) errors.push('current_stage');
   if (!VALID.duration.has(duration)) errors.push('duration');
   if (!VALID.env.has(env)) errors.push('env');
   if (source && !VALID.source.has(source)) errors.push('source');
@@ -245,7 +249,7 @@ function validateSignup(body) {
   if (pledges !== 4) errors.push('pledges');
   if (notes.length > 2000) errors.push('notes');
 
-  return { errors, cleaned: { name, email, phone, task, specialExperiences, expertiseAreas, duration, env, source, notes, why, help, pledges } };
+  return { errors, cleaned: { name, email, phone, task, specialExperiences, expertiseAreas, currentStage, duration, env, source, notes, why, help, pledges } };
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────
@@ -444,6 +448,7 @@ function buildMailTemplateData(signup, content) {
     task: signup.task || '',
     special_experiences: signup.special_experiences || '',
     expertise_areas: signup.expertise_areas || '',
+    current_stage: signup.current_stage || '',
     ...extractEventMeta(content),
   };
 }
@@ -452,6 +457,7 @@ function getSignupFieldLabels(content) {
   return {
     special_experiences: String(content.form_q11_label || '三個比較特別的經驗'),
     expertise_areas: String(content.form_q12_label || '擅長領域'),
+    current_stage: String(content.form_q13_label || '你目前所處的階段是什麼？'),
   };
 }
 
@@ -528,11 +534,11 @@ app.post('/api/signup', signupLimiter, async (req, res, next) => {
     const ip = (req.headers['x-forwarded-for'] || '').toString().split(',')[0].trim() || req.ip;
     const ua = (req.headers['user-agent'] || '').toString().slice(0, 500);
     const q = `
-      INSERT INTO signups (name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges, ip, user_agent)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+      INSERT INTO signups (name, email, phone, task, special_experiences, expertise_areas, current_stage, duration, why, env, help, source, notes, pledges, ip, user_agent)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       RETURNING id`;
     const params = [
-      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.task, cleaned.specialExperiences, cleaned.expertiseAreas, cleaned.duration,
+      cleaned.name, cleaned.email, cleaned.phone || null, cleaned.task, cleaned.specialExperiences, cleaned.expertiseAreas, cleaned.currentStage, cleaned.duration,
       cleaned.why, cleaned.env, cleaned.help, cleaned.source || null, cleaned.notes || null,
       cleaned.pledges, ip, ua,
     ];
@@ -551,7 +557,7 @@ app.get('/admin/mail', basicAuth, (req, res) => res.sendFile(path.join(__dirname
 app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, paid_confirmed, pledges, ip FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, current_stage, duration, why, env, help, source, notes, paid_confirmed, pledges, ip FROM signups ORDER BY id DESC'
     );
     res.json({
       rows,
@@ -563,7 +569,7 @@ app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
 app.get('/admin/api/mail-drafts/setup', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, pledges FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, current_stage, duration, why, env, help, source, notes, pledges FROM signups ORDER BY id DESC'
     );
     const connection = await getStoredGmailConnection();
     res.json({
@@ -646,7 +652,7 @@ app.post('/admin/api/gmail/drafts', basicAuth, requireSameOrigin, async (req, re
     if (!connection) return res.status(400).json({ ok: false, error: 'gmail_not_connected' });
 
     const { rows } = await pool.query(
-      'SELECT id, name, email, task, special_experiences, expertise_areas FROM signups WHERE id = ANY($1::int[]) ORDER BY id DESC',
+      'SELECT id, name, email, task, special_experiences, expertise_areas, current_stage FROM signups WHERE id = ANY($1::int[]) ORDER BY id DESC',
       [signupIds]
     );
     if (!rows.length) return res.status(404).json({ ok: false, error: 'signups_not_found' });
@@ -747,10 +753,10 @@ const formatTaipeiDateTime = (d) => {
 app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, paid_confirmed, pledges, ip FROM signups ORDER BY id DESC'
+      'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, current_stage, duration, why, env, help, source, notes, paid_confirmed, pledges, ip FROM signups ORDER BY id DESC'
     );
     const signupLabels = getSignupFieldLabels(contentCache);
-    const cols = ['id','created_at','name','email','phone','task','special_experiences','expertise_areas','duration','why','env','help','source','notes','paid_confirmed','pledges','ip'];
+    const cols = ['id','created_at','name','email','phone','task','special_experiences','expertise_areas','current_stage','duration','why','env','help','source','notes','paid_confirmed','pledges','ip'];
     const labels = {
       id: '編號',
       created_at: '建立時間',
@@ -760,6 +766,7 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
       task: '任務',
       special_experiences: signupLabels.special_experiences,
       expertise_areas: signupLabels.expertise_areas,
+      current_stage: signupLabels.current_stage,
       duration: '預計時長',
       why: '原因',
       env: '環境',
