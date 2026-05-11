@@ -448,6 +448,13 @@ function buildMailTemplateData(signup, content) {
   };
 }
 
+function getSignupFieldLabels(content) {
+  return {
+    special_experiences: String(content.form_q11_label || '三個比較特別的經驗'),
+    expertise_areas: String(content.form_q12_label || '擅長領域'),
+  };
+}
+
 const csvEscape = (v) => {
   let s = v == null ? '' : String(v);
   // Prevent CSV/Excel formula injection
@@ -546,7 +553,10 @@ app.get('/admin/api/signups', basicAuth, async (req, res, next) => {
     const { rows } = await pool.query(
       'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, paid_confirmed, pledges, ip FROM signups ORDER BY id DESC'
     );
-    res.json(rows);
+    res.json({
+      rows,
+      labels: getSignupFieldLabels(contentCache),
+    });
   } catch (e) { next(e); }
 });
 
@@ -739,6 +749,7 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
     const { rows } = await pool.query(
       'SELECT id, created_at, name, email, phone, task, special_experiences, expertise_areas, duration, why, env, help, source, notes, paid_confirmed, pledges, ip FROM signups ORDER BY id DESC'
     );
+    const signupLabels = getSignupFieldLabels(contentCache);
     const cols = ['id','created_at','name','email','phone','task','special_experiences','expertise_areas','duration','why','env','help','source','notes','paid_confirmed','pledges','ip'];
     const labels = {
       id: '編號',
@@ -747,8 +758,8 @@ app.get('/admin/api/export.csv', basicAuth, async (req, res, next) => {
       email: '電郵',
       phone: '電話',
       task: '任務',
-      special_experiences: '三個比較特別的經驗',
-      expertise_areas: '擅長領域',
+      special_experiences: signupLabels.special_experiences,
+      expertise_areas: signupLabels.expertise_areas,
       duration: '預計時長',
       why: '原因',
       env: '環境',

@@ -162,6 +162,10 @@ const HELP_LABEL = {
 };
 
 let all = [];
+let signupLabels = {
+  special_experiences: '特別經驗 / 背景',
+  expertise_areas: '擅長領域 / 階段',
+};
 
 function esc(s) {
   return (s == null ? '' : String(s)).replace(/[<>&"']/g, (c) => ({
@@ -186,7 +190,12 @@ async function load() {
   try {
     const r = await fetch('/admin/api/signups', { credentials: 'same-origin' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    all = await r.json();
+    const data = await r.json();
+    all = Array.isArray(data) ? data : (data.rows || []);
+    signupLabels = {
+      special_experiences: data?.labels?.special_experiences || signupLabels.special_experiences,
+      expertise_areas: data?.labels?.expertise_areas || signupLabels.expertise_areas,
+    };
     render();
   } catch (e) {
     document.getElementById('err').innerHTML = `<div class="err">載入失敗：${esc(e.message)}</div>`;
@@ -228,8 +237,8 @@ function render() {
       <th>姓名</th>
       <th>Email</th>
       <th>電話</th>
-      <th>特別經驗 / 背景</th>
-      <th>擅長領域 / 階段</th>
+      <th>${esc(signupLabels.special_experiences)}</th>
+      <th>${esc(signupLabels.expertise_areas)}</th>
       <th>那件想完成的事</th>
       <th>拖了</th>
       <th>環境</th>
