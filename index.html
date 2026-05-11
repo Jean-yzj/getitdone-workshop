@@ -13,8 +13,6 @@
 </head>
 <body>
 
-<div class="deadline-banner">報名截止日：5/14 晚上 10:00</div>
-
 <!-- ============= Nav ============= -->
 <nav class="nav">
   <div class="nav-inner">
@@ -211,23 +209,6 @@
         </div>
 
         <div class="form-row">
-          <label>{{form_q13_label}}<span class="req">*</span></label>
-          <span class="help">{{form_q13_help}}</span>
-          <div class="opts">
-            <label><input type="radio" name="grade_level" value="highschool" required> 高中</label>
-            <label><input type="radio" name="grade_level" value="university"> 大學</label>
-            <label><input type="radio" name="grade_level" value="graduate"> 研究所</label>
-            <label><input type="radio" name="grade_level" value="workforce"> 出社會</label>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <label>{{form_q14_label}}<span class="req">*</span></label>
-          <span class="help">{{form_q14_help}}</span>
-          <input type="text" name="domain_field" required placeholder="{{form_q14_ph}}">
-        </div>
-
-        <div class="form-row">
           <label>{{form_q4_label}}<span class="req">*</span></label>
           <span class="help">{{form_q4_help}}</span>
           <div class="example-box">
@@ -246,6 +227,12 @@
           <label>{{form_q12_label}}<span class="req">*</span></label>
           <span class="help">{{form_q12_help}}</span>
           <textarea name="expertise_areas" required placeholder="{{form_q12_ph}}"></textarea>
+        </div>
+
+        <div class="form-row">
+          <label>{{form_q13_label}}<span class="req">*</span></label>
+          <span class="help">{{form_q13_help}}</span>
+          <textarea name="current_stage" required placeholder="{{form_q13_ph}}"></textarea>
         </div>
 
         <div class="form-row">
