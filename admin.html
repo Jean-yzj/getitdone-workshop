@@ -165,6 +165,7 @@ let all = [];
 let signupLabels = {
   special_experiences: '特別經驗 / 背景',
   expertise_areas: '擅長領域 / 階段',
+  current_stage: '你目前所處的階段是什麼？',
 };
 
 function esc(s) {
@@ -195,6 +196,7 @@ async function load() {
     signupLabels = {
       special_experiences: data?.labels?.special_experiences || signupLabels.special_experiences,
       expertise_areas: data?.labels?.expertise_areas || signupLabels.expertise_areas,
+      current_stage: data?.labels?.current_stage || signupLabels.current_stage,
     };
     render();
   } catch (e) {
@@ -206,7 +208,7 @@ async function load() {
 function matchesQuery(r, q) {
   if (!q) return true;
   const hay = [
-    r.name, r.email, r.phone, r.task, r.special_experiences, r.expertise_areas, r.notes,
+    r.name, r.email, r.phone, r.task, r.special_experiences, r.expertise_areas, r.current_stage, r.notes,
     DURATION_LABEL[r.duration] || r.duration,
     ENV_LABEL[r.env] || r.env,
     SOURCE_LABEL[r.source] || r.source,
@@ -239,6 +241,7 @@ function render() {
       <th>電話</th>
       <th>${esc(signupLabels.special_experiences)}</th>
       <th>${esc(signupLabels.expertise_areas)}</th>
+      <th>${esc(signupLabels.current_stage)}</th>
       <th>那件想完成的事</th>
       <th>拖了</th>
       <th>環境</th>
@@ -255,6 +258,7 @@ function render() {
         <td class="tight">${esc(r.phone || '')}</td>
         <td class="profile">${esc(r.special_experiences || '') || '<span class="ts">未填</span>'}</td>
         <td class="profile">${esc(r.expertise_areas || '') || '<span class="ts">未填</span>'}</td>
+        <td class="profile">${esc(r.current_stage || '') || '<span class="ts">未填</span>'}</td>
         <td class="task">
           ${esc(r.task)}
           <details class="row-detail">
